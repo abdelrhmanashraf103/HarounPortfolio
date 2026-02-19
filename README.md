@@ -71,7 +71,7 @@ You can view the live portfolio here:
 - LinkedIn:(https://www.linkedin.com/in/abdelrhman-haroun-455aa930a/)
 - GitHub: (https://github.com/abdelrhmanashraf103/)
 - HackerRank: (https://www.hackerrank.com/profile/abdelrhmanashra2)
-- Email: (abdelrhmanashraf103@gmail.Columns)
+- Email: (abdelrhmanashraf103@gmail.com)
 
 ---
 
