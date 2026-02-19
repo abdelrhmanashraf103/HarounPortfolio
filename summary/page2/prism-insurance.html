@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRISM Insurance Analytics Dashboard - Abdelrahman Haroun</title>
+    
+    <!-- أيقونة الموقع (الصورة الشخصية) -->
+    <link rel="icon" type="image/png" href="../../assets/images/icon.png">
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+    <!-- AOS -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <!-- particles.js -->
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #081b29;
+            --bg-alt: #0a2438;
+            --primary: #00eeff;
+            --primary-glow: rgba(0,238,255,0.3);
+            --accent: #C62B88;
+            --accent-glow: rgba(198,43,136,0.3);
+            --text: #ffffff;
+            --text-secondary: #b0b0b0;
+            --border: #1e3a4a;
+            --card-bg: #0a2535;
+            --nav-bg: rgba(8,27,41,0.95);
+            --hover-bg: #1e3a4a;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            overflow-x: hidden;
+        }
+
+        .neon {
+            color: var(--primary);
+            text-shadow: 0 0 10px var(--primary), 0 0 25px var(--primary);
+        }
+
+        /* ===== Navbar محسّن ===== */
+        .nav {
+            background: #0a1f2f !important;
+            backdrop-filter: blur(8px);
+            border-bottom: 2px solid var(--primary);
+            box-shadow: 0 4px 20px rgba(0, 238, 255, 0.2);
+            z-index: 9999;
+        }
+
+        .nav-link {
+            color: #ffffff !important;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 30px;
+            transition: all 0.3s ease;
+            position: relative;
+            text-decoration: none;
+        }
+
+        .nav-link:hover {
+            color: var(--primary) !important;
+            background: rgba(0, 238, 255, 0.1);
+            text-shadow: 0 0 8px var(--primary-glow);
+        }
+
+        .nav-link.active {
+            background: var(--accent) !important;
+            color: white !important;
+            border: 1px solid rgba(198, 43, 136, 0.3);
+        }
+
+        .nav .neon {
+            color: var(--primary) !important;
+            text-shadow: 0 0 10px var(--primary), 0 0 20px var(--primary);
+        }
+
+        /* زر القائمة للموبايل */
+        #mobile-menu-btn {
+            background: rgba(0, 238, 255, 0.1);
+            border: 1px solid var(--primary);
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            color: var(--primary);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        #mobile-menu-btn:hover {
+            background: rgba(0, 238, 255, 0.2);
+            transform: scale(1.1);
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        /* تحسين القائمة الجانبية */
+        .mobile-menu {
+            background: #0a1f2f !important;
+            border-right: 2px solid var(--primary);
+        }
+
+        .mobile-nav-link {
+            color: #fff !important;
+            padding: 12px 20px !important;
+            margin: 4px 0;
+            border-radius: 30px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: block;
+        }
+
+        .mobile-nav-link:hover {
+            background: rgba(0, 238, 255, 0.1) !important;
+            color: var(--primary) !important;
+            transform: translateX(5px);
+        }
+
+        .mobile-nav-link.active {
+            background: rgba(198, 43, 136, 0.2) !important;
+            color: var(--accent) !important;
+            border-left: 4px solid var(--accent);
+        }
+
+        /* باقي الأنماط */
+        .section-title {
+            position: relative;
+            display: inline-block;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            border-radius: 2px;
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            transition: all 0.35s ease;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-12px);
+            border-color: var(--accent);
+            box-shadow: 0 20px 40px var(--accent-glow);
+        }
+
+        .card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .card:hover img {
+            transform: scale(1.08);
+        }
+
+        .btn-neon {
+            position: relative;
+            overflow: hidden;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            font-weight: 600;
+            background: transparent;
+            transition: all 0.3s ease;
+        }
+
+        .btn-neon:hover {
+            background: var(--primary);
+            color: #081b29;
+            box-shadow: 0 0 30px var(--primary);
+        }
+
+        .btn-neon.accent {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .btn-neon.accent:hover {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 0 30px var(--accent-glow);
+        }
+
+        .profile-pic {
+            border: 5px solid var(--primary);
+            box-shadow: 0 0 50px var(--primary-glow), 0 0 30px var(--accent-glow);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-18px); }
+        }
+
+        .badge {
+            background-color: var(--border);
+            color: var(--text-secondary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            display: inline-block;
+            margin-right: 0.25rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .mobile-menu {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .mobile-menu.active {
+            transform: translateX(0);
+        }
+
+        .mobile-menu-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(4px);
+            z-index: 49;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .mobile-menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .animated-icon {
+            position: relative;
+            display: inline-block;
+            animation: bounceRotate 3s infinite ease-in-out;
+        }
+
+        @keyframes bounceRotate {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-5px) rotate(5deg); }
+            75% { transform: translateY(5px) rotate(-5deg); }
+        }
+
+        /* أنيميشن اسم المشروع (ثابت على gradient) */
+        .gradient-shift {
+            background: linear-gradient(90deg, var(--primary), var(--accent), #8b5cf6, var(--primary));
+            background-size: 300% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 3s ease infinite;
+        }
+
+        @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .particle {
+            position: absolute;
+            background: var(--accent);
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            z-index: -1;
+        }
+
+        @keyframes particle-animation {
+            0% {
+                transform: translate(0, 0) scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--x), var(--y)) scale(1);
+                opacity: 0;
+            }
+        }
+
+        /* ===== IMAGE PREVIEW / LIGHTBOX ===== */
+        .preview-img {
+            cursor: zoom-in;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .preview-img:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 25px var(--accent-glow), 0 0 8px var(--primary-glow);
+            border-color: var(--accent) !important;
+        }
+
+        .preview-img-wrapper {
+            position: relative;
+            overflow: hidden;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .preview-img-wrapper::after {
+            content: '\f00e';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: var(--primary);
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .preview-img-wrapper:hover::after {
+            opacity: 1;
+        }
+
+        .preview-img-wrapper:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        /* ===== LIGHTBOX OVERLAY ===== */
+        #lightbox {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.92);
+            backdrop-filter: blur(12px);
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.35s ease;
+        }
+
+        #lightbox.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #lightbox-img {
+            max-width: 90vw;
+            max-height: 85vh;
+            object-fit: contain;
+            border-radius: 12px;
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 60px var(--primary-glow), 0 0 30px var(--accent-glow);
+            transform: scale(0.85);
+            transition: transform 0.35s ease, opacity 0.15s ease;
+            opacity: 1;
+        }
+
+        #lightbox.active #lightbox-img {
+            transform: scale(1);
+        }
+
+        #lightbox-close {
+            position: fixed;
+            top: 20px;
+            right: 25px;
+            color: #fff;
+            font-size: 2.2rem;
+            cursor: pointer;
+            background: rgba(198,43,136,0.2);
+            border: 1px solid var(--accent);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 100000;
+        }
+
+        #lightbox-close:hover {
+            background: var(--accent);
+            transform: rotate(90deg) scale(1.1);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        #lightbox-caption {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            background: rgba(8,27,41,0.85);
+            padding: 8px 20px;
+            border-radius: 30px;
+            border: 1px solid var(--border);
+            text-align: center;
+            max-width: 80vw;
+            pointer-events: none;
+        }
+
+        /* Nav arrows */
+        #lightbox-prev,
+        #lightbox-next {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #fff;
+            font-size: 1.6rem;
+            cursor: pointer;
+            background: rgba(0,238,255,0.1);
+            border: 1px solid var(--primary);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 100000;
+        }
+
+        #lightbox-prev { left: 20px; }
+        #lightbox-next { right: 20px; }
+
+        #lightbox-prev:hover,
+        #lightbox-next:hover {
+            background: rgba(0,238,255,0.25);
+            box-shadow: 0 0 20px var(--primary-glow);
+            transform: translateY(-50%) scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- Particles -->
+    <div id="particles-js" class="fixed inset-0 pointer-events-none"></div>
+
+    <!-- ===== LIGHTBOX ===== -->
+    <div id="lightbox">
+        <button id="lightbox-close"><i class="fas fa-times"></i></button>
+        <button id="lightbox-prev"><i class="fas fa-chevron-left"></i></button>
+        <img id="lightbox-img" src="" alt="Preview">
+        <button id="lightbox-next"><i class="fas fa-chevron-right"></i></button>
+        <div id="lightbox-caption"></div>
+    </div>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu-overlay" class="mobile-menu-overlay"></div>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="mobile-menu fixed top-0 left-0 w-72 h-full z-50 p-6 overflow-y-auto">
+        <button id="close-menu" class="absolute top-6 right-6 text-3xl text-cyan-400"><i class="fas fa-times"></i></button>
+        <div class="mt-16 space-y-6">
+            <a href="../../index.html#home" class="mobile-nav-link">Home</a>
+            <a href="../../index.html#about" class="mobile-nav-link">About</a>
+            <a href="../../index.html#astats" class="mobile-nav-link">Stats</a>
+            <a href="../../index.html#skills" class="mobile-nav-link">Skills</a>
+            <a href="../../index.html#services" class="mobile-nav-link">Services</a>
+            <a href="../../index.html#projects" class="mobile-nav-link active">Projects</a>
+            <a href="../../index.html#experience" class="mobile-nav-link">Experience</a>
+            <a href="../../index.html#contact" class="mobile-nav-link">Contact</a>
+        </div>
+        <div class="absolute bottom-8 left-0 w-full px-6">
+            <div class="flex justify-center gap-6">
+                <a href="https://github.com/abdelrhmanashraf103" target="_blank" class="text-3xl text-gray-400 hover:text-cyan-400"><i class="fab fa-github"></i></a>
+                <a href="https://www.linkedin.com/in/abdelrhman-haroun-455aa930a/" target="_blank" class="text-3xl text-gray-400 hover:text-cyan-400"><i class="fab fa-linkedin"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="nav fixed top-0 w-full z-40 py-5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <img src="../../assets/images/haroun1.png" alt="Abdelrahman Haroun" class="profile-pic w-10 h-10 rounded-full object-cover border-2 border-primary">
+                <span class="text-xl sm:text-2xl font-bold tracking-wide neon">
+                    A<sup class="text-xs relative -top-2">3</sup>H Portfolio
+                </span>
+            </div>
+            <div class="hidden md:flex items-center gap-6 lg:gap-9 text-base lg:text-lg font-medium">
+                <a href="../../index.html#home" class="nav-link">Home</a>
+                <a href="../../index.html#about" class="nav-link">About</a>
+                <a href="../../index.html#stats" class="nav-link">Stats</a>
+                <a href="../../index.html#skills" class="nav-link">Skills</a>
+                <a href="../../index.html#services" class="nav-link">Services</a>
+                <a href="../../index.html#projects" class="nav-link active">Projects</a>
+                <a href="../../index.html#experience" class="nav-link">Experience</a>
+                <a href="../../index.html#contact" class="nav-link">Contact</a>
+            </div>
+            <div class="md:hidden flex items-center gap-3">
+                <button id="mobile-menu-btn" class="text-3xl text-primary"><i class="fas fa-bars animated-icon"></i></button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="min-h-screen flex items-center justify-center px-4 pt-28 pb-16" style="background: var(--bg-alt);">
+        <div class="container mx-auto">
+            <div class="max-w-4xl mx-auto text-center">
+                <h1 class="text-3xl md:text-5xl font-bold mb-8">
+                    <span class="gradient-shift">PRISM Insurance Analytics Dashboard</span>
+                </h1>
+                <p class="text-lg text-secondary mb-8 max-w-2xl mx-auto">
+                    An interactive Power BI dashboard for PRISM Insurance, analyzing premiums, claims, customer feedback, and policy performance for data-driven insights.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="https://app.powerbi.com/links/Itsn44DN6p?ctid=a2c31985-cc3b-4e19-8fa2-59fa488f0c27&pbi_source=linkShare&bookmarkGuid=ff8d22c9-cfc8-4c9e-8ca3-119652216906" target="_blank" class="btn-neon accent px-8 py-3 rounded-lg font-medium">View Project</a>
+                    <a href="../../index.html#projects" class="btn-neon px-8 py-3 rounded-lg font-medium">Back to Projects</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Project Details Section -->
+    <section class="py-20 px-4" style="background: var(--bg);">
+        <div class="container mx-auto">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="section-title text-4xl md:text-5xl font-bold text-center mb-12" data-aos="zoom-in">Project Details</h2>
+
+                <div class="card p-6 rounded-lg mb-8" data-aos="fade-up">
+                    <h3 class="text-xl font-semibold mb-4 neon">🚀 Project Overview</h3>
+                    <p class="text-secondary mb-4">
+                        This project features an interactive analytics dashboard for <strong>PRISM Insurance Pvt. Ltd.</strong>, a fictional insurance company. It transforms raw insurance data into actionable insights, helping stakeholders monitor key metrics like premiums, claims, customer feedback, and policy performance. Designed for data-driven decisions, it uncovers trends in claims processing and highlights customer service improvement areas.
+                    </p>
+                    <p class="text-secondary">
+                        The dashboard processes datasets including policy details, customer demographics, claim histories, and sentiment-analyzed feedback. With advanced visualizations, it offers a user-friendly interface to explore complex data, cutting manual reporting time and revealing efficiency opportunities.
+                    </p>
+                </div>
+
+                <div class="card p-6 rounded-lg mb-8" data-aos="fade-up">
+                    <h3 class="text-xl font-semibold mb-4 neon">🎯 Objectives</h3>
+                    <ul class="list-disc list-inside text-secondary">
+                        <li>Visualize core metrics: Aggregate and display premiums 💰, coverage 📦, and claims 📋 for a quick business health overview.</li>
+                        <li>Analyze customer feedback: Use sentiment analysis 💡 and word clouds ☁ to spot common pain points and positive experiences.</li>
+                        <li>Track claims and policies: Monitor claim statuses ✅, policy types 📜, and demographic trends 👥 to identify inefficiencies.</li>
+                        <li>Support interactive exploration: Enable filtering 🎛, drill-downs ⬇, and custom views for deeper analysis.</li>
+                        <li>Enhance portfolio showcase: Showcase expertise in data visualization 🎨, ETL processes 🔄, and BI tools 💻.</li>
+                    </ul>
+                </div>
+
+                <div class="card p-6 rounded-lg mb-8" data-aos="fade-up">
+                    <h3 class="text-xl font-semibold mb-4 neon">🔧 Technologies Used</h3>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <span class="badge">Power BI 📊</span>
+                        <span class="badge">Power Query 🧹</span>
+                        <span class="badge">DAX 📉</span>
+                        <span class="badge">Excel/CSV 📂</span>
+                        <span class="badge">Sentiment Analysis 💡</span>
+                    </div>
+                    <p class="text-secondary">
+                        <strong>Environment</strong>: Power BI Desktop, deployable to Power BI Service for sharing.
+                    </p>
+                </div>
+
+                <div class="card p-6 rounded-lg mb-8" data-aos="fade-up">
+                    <h3 class="text-xl font-semibold mb-4 neon">📊 Key Features and Visualizations</h3>
+                    <p class="text-secondary mb-4">
+                        The dashboard spans multiple pages for focused analysis, including an overview, detailed data, and feedback sections.
+                    </p>
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="text-lg font-semibold mb-2">1. Executive Summary Metrics 📊</h4>
+                            <ul class="list-disc list-inside text-secondary">
+                                <li>Total Premium Amount: 5.98M 💰</li>
+                                <li>Total Coverage Amount: 600.55M 📦</li>
+                                <li>Sum of Claim Amounts: 16.91M 📋</li>
+                                <li>Displayed as bold cards with conditional formatting to flag variances ⚠.</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-semibold mb-2">2. Policy and Demographic Breakdowns 📜👥</h4>
+                            <ul class="list-disc list-inside text-secondary">
+                                <li><strong>Premium Amount by Policy Type</strong>: Bar chart showing Travel (2.5M), Health (1.2M), Auto (1M), Life (0.7M), Home (0.6M) 🚗🏠.</li>
+                                <li><strong>Active vs. Inactive Policies</strong>: Pie chart with 25.09% Active and 74.91% Inactive, aiding retention analysis.</li>
+                                <li><strong>Gender Distribution</strong>: Cards showing 5001 Females 👩 and 5003 Males 👨, expandable by age groups (Young Adult, Adult, Elder).</li>
+                            </ul>
+                            <!-- <img src="images/prism-policy-breakdown.png" alt="Policy Breakdown Visualization" class="w-full h-auto rounded-lg shadow-sm mt-4"> -->
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-semibold mb-2">3. Claims Analysis 📋</h4>
+                            <ul class="list-disc list-inside text-secondary">
+                                <li><strong>Number of Claims by Claim Status</strong>: Column chart with Rejected (8.4K), Settled (3.4K), Pending (2.3K) ✅❌⏳.</li>
+                                <li><strong>Claim Amount by Age Group</strong>: Area chart trending claims across Young Adult, Adult, Elder, showing higher claims in older groups 👴.</li>
+                                <li><strong>Claims Summary Table</strong>: Crosstab by Policy Type, e.g., Auto: Pending 20,810.53, Rejected 40,671.59, Settled 32,984.58.</li>
+                            </ul>
+                            <!-- <img src="images/prism-claims-analysis.png" alt="Claims Analysis Visualization" class="w-full h-auto rounded-lg shadow-sm mt-4"> -->
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-semibold mb-2">4. Customer Feedback and Sentiment Analysis 😊💬</h4>
+                            <ul class="list-disc list-inside text-secondary">
+                                <li><strong>Word Cloud Visualization</strong>: Highlights terms like "Policy," "Claims," "Customer Service," "Helpful," "Frustrating," "Quick" from feedback text ☁.</li>
+                                <li><strong>Feedback Categorization Bar Chart</strong>: Counts Excellent (54) 😊, Needs Improvement (39) ⚠, Good (4) ✅.</li>
+                                <li><strong>Detailed Feedback Table</strong>: Lists names, sentiment scores (0.01-0.07), e.g., Aaron Collins: "Website down, inconvenient," Amanda Scott: "Policy rates increased, not happy."</li>
+                            </ul>
+                            <!-- <img src="images/prism-feedback-wordcloud.png" alt="Feedback Word Cloud Visualization" class="w-full h-auto rounded-lg shadow-sm mt-4"> -->
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-semibold mb-2">5. Interactive Data Table 📂</h4>
+                            <p class="text-secondary">
+                                Paginated view of raw data (PolicyNumber, CustomerID, ClaimNumber, Age, Gender, etc.) with filters 🎛 and sorting 🔧.
+                            </p>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-semibold mb-2">6. Advanced Interactivity 🔍</h4>
+                            <ul class="list-disc list-inside text-secondary">
+                                <li><strong>Filters and Slicers</strong>: Dynamic updates across visuals by Age Group, Claim Status, Gender, Policy Type 🎛.</li>
+                                <li><strong>Drill-Through Capabilities</strong>: Click visuals to explore detailed pages (e.g., claims, feedback) ⬇.</li>
+                                <li><strong>AI-Enhanced Insights</strong>: Sentiment scoring 😊 and key influencers for claims rejection trends 💡.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card p-6 rounded-lg mb-8" data-aos="fade-up">
+                    <h3 class="text-xl font-semibold mb-4 neon">📸 Project Output</h3>
+                    <p class="text-secondary mb-4">View a project demonstration and images of the outputs (click on the images to enlarge them)</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <div class="preview-img-wrapper">
+                                <img src="../../assets/image_pages/prism_page1.png" alt="PRISM Output 1" 
+                                     class="w-full h-auto rounded-lg preview-img"
+                                     data-caption="Main Dashboard">
+                            </div>
+                            <p class="text-center text-sm text-secondary mt-2">Main Dashboard</p>
+                        </div>
+                        <div>
+                            <div class="preview-img-wrapper">
+                                <img src="../../assets/image_pages/prism_page2.png" alt="PRISM Output 2" 
+                                     class="w-full h-auto rounded-lg preview-img"
+                                     data-caption="prism analysis">
+                            </div>
+                            <p class="text-center text-sm text-secondary mt-2">Prism Analysis</p>
+                        </div>
+                        <div>
+                            <div class="preview-img-wrapper">
+                                <img src="../../assets/image_pages/prism_page3.png" alt="PRISM Output 2" 
+                                     class="w-full h-auto rounded-lg preview-img"
+                                     data-caption="prism analysis">
+                            </div>
+                            <p class="text-center text-sm text-secondary mt-2">Prism Analysis</p>
+                        </div>
+                    </div>
+
+                    <h4 class="text-lg font-semibold mb-3 neon">🎥 Demo Video</h4>
+                    <div class="w-full aspect-video rounded-lg overflow-hidden border border-gray-600">
+                        <!-- يمكنك استخدام أحد الخيارين التاليين: -->
+
+                        <!-- الخيار 1: فيديو من YouTube (iframe) -->
+                        <!-- 
+                        <iframe width="100%" height="100%" src="https://www.youtube.com/embed/VIDEO_ID" 
+                                title="Demo Video" frameborder="0" allowfullscreen>
+                        </iframe>
+                        -->
+
+                        <!-- الخيار 2: فيديو محلي (HTML5 video) -->
+                        <!-- 
+                        <video controls width="100%" height="100%">
+                            <source src="../../videos/prism_demo.mp4" type="video/mp4">
+                            متصفحك لا يدعم تشغيل الفيديو.
+                        </video>
+                        -->
+
+                        <!-- placeholder توضيحي -->
+                        <div class="w-full h-full bg-gray-800 flex items-center justify-center text-gray-400">
+                            <i class="fas fa-play-circle text-6xl mr-2"></i>
+                            <span class="text-xl">Video will be added here soon</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card p-6 rounded-lg mb-8" data-aos="fade-up">
+                    <h3 class="text-xl font-semibold mb-4 neon">⚙️ Challenges and Solutions</h3>
+                    <ul class="list-disc list-inside text-secondary">
+                        <li><strong>Challenge</strong>: Inconsistent data formats in feedback 💬 and dates 📅.<br>
+                            <strong>Solution</strong>: Power Query cleaned data 🧹, with text analytics for sentiment 💡.</li>
+                        <li><strong>Challenge</strong>: Avoiding visual overload 🎨.<br>
+                            <strong>Solution</strong>: Multi-page layout with tooltips ℹ and cross-highlighting 🔗.</li>
+                        <li><strong>Challenge</strong>: Performance with large datasets 📊.<br>
+                            <strong>Solution</strong>: Optimized DAX 📉 and aggregated models for speed ⚡.</li>
+                    </ul>
+                </div>
+
+                <div class="card p-6 rounded-lg mb-8" data-aos="fade-up">
+                    <h3 class="text-xl font-semibold mb-4 neon">📈 Results and Impact</h3>
+                    <ul class="list-disc list-inside text-secondary">
+                        <li><strong>Efficiency Gains</strong>: Cut report generation from hours to minutes with automation 🤖.</li>
+                        <li><strong>Insights Uncovered</strong>: Spotted high Health policy rejections and themes like "unclear terms" for improvement ⚠.</li>
+                        <li><strong>Scalability</strong>: Adapts to new data seamlessly 🌐.</li>
+                        <li><strong>Personal Growth</strong>: Boosted skills in BI, data storytelling 📖, and user design 🎨.</li>
+                    </ul>
+                </div>
+
+                <div class="card p-6 rounded-lg mb-8" data-aos="fade-up">
+                    <h3 class="text-xl font-semibold mb-4 neon">📑 Pages</h3>
+                    <ul class="list-disc list-inside text-secondary">
+                        <li><strong>Page 1</strong>: Customer Feedback Page – Word Cloud ☁, Feedback Table 💬, Categorization Chart 📊.</li>
+                        <li><strong>Page 2</strong>: Detailed Data Table – Policy and Claim Records 📂 with Filters 🎛.</li>
+                        <li><strong>Page 3</strong>: Overview Dashboard – Summary Metrics 📊, Policy Breakdowns 📜, Claims Visuals 📋.</li>
+                    </ul>
+                </div>
+
+                <div class="card p-6 rounded-lg" data-aos="fade-up">
+                    <h3 class="text-xl font-semibold mb-4 neon">👨‍💻 Author</h3>
+                    <p class="text-secondary mb-4">
+                        Developed by <a href="https://www.linkedin.com/in/abdelrhman-haroun-455aa930a/" target="_blank" class="text-primary hover:underline">Abdelrahman Haroun</a>
+                    </p>
+                    <p class="text-secondary">
+                        👉 If you like this project, give it a <a href="https://app.powerbi.com/links/Itsn44DN6p?ctid=a2c31985-cc3b-4e19-8fa2-59fa488f0c27&pbi_source=linkShare&bookmarkGuid=ff8d22c9-cfc8-4c9e-8ca3-119652216906" target="_blank" class="text-primary hover:underline">⭐ on GitHub</a>!
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-10 text-center border-t border-primary/30">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-center gap-6 mb-6">
+                <a href="https://github.com/abdelrhmanashraf103" target="_blank" class="text-3xl text-gray-400 hover:text-accent transition transform hover:scale-110"><i class="fab fa-github animated-icon"></i></a>
+                <a href="https://www.linkedin.com/in/abdelrhman-haroun-455aa930a/" target="_blank" class="text-3xl text-gray-400 hover:text-accent transition transform hover:scale-110"><i class="fab fa-linkedin animated-icon"></i></a>
+            </div>
+            <p class="text-gray-400 text-sm">© 2025 Abdelrahman Haroun • Built with neon & passion ✨</p>
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({ duration: 800, once: true, offset: 100 });
+
+        particlesJS('particles-js', {
+            particles: {
+                number: { value: 50, density: { enable: true, value_area: 800 } },
+                color: { value: '#00eeff' },
+                shape: { type: 'circle' },
+                opacity: { value: 0.45, random: true },
+                size: { value: 3, random: true },
+                line_linked: { enable: true, distance: 140, color: '#00eeff', opacity: 0.35, width: 1 },
+                move: { enable: true, speed: 1.8, direction: 'none', random: false, straight: false, out_mode: 'out' }
+            },
+            interactivity: {
+                detect_on: 'canvas',
+                events: { onhover: { enable: true, mode: 'repulse' }, onclick: { enable: true, mode: 'push' }, resize: true },
+                modes: { repulse: { distance: 90, duration: 0.4 }, push: { particles_nb: 4 } }
+            },
+            retina_detect: true
+        });
+
+        // Mobile Menu
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+        const closeMenuBtn = document.getElementById('close-menu');
+        const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+
+        function openMobileMenu() {
+            mobileMenu.classList.add('active');
+            mobileMenuOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeMobileMenu() {
+            mobileMenu.classList.remove('active');
+            mobileMenuOverlay.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        mobileMenuBtn.addEventListener('click', openMobileMenu);
+        closeMenuBtn.addEventListener('click', closeMobileMenu);
+        mobileMenuOverlay.addEventListener('click', closeMobileMenu);
+        mobileNavLinks.forEach(link => link.addEventListener('click', closeMobileMenu));
+
+        // (اختياري: تأثير الجسيمات عند التمرير على العنوان)
+        const nameContainer = document.querySelector('h1');
+        nameContainer.addEventListener('mousemove', function(e) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            const size = Math.random() * 10 + 5;
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            const offsetX = (Math.random() - 0.5) * 50;
+            const offsetY = (Math.random() - 0.5) * 50;
+            particle.style.left = `${e.clientX}px`;
+            particle.style.top = `${e.clientY}px`;
+            particle.style.setProperty('--x', `${offsetX}px`);
+            particle.style.setProperty('--y', `${offsetY}px`);
+            particle.style.animation = 'particle-animation 1s ease-out forwards';
+            document.body.appendChild(particle);
+            setTimeout(() => particle.remove(), 1000);
+        });
+
+        // ===== LIGHTBOX =====
+        const lightbox      = document.getElementById('lightbox');
+        const lightboxImg   = document.getElementById('lightbox-img');
+        const lightboxClose = document.getElementById('lightbox-close');
+        const lightboxCaption = document.getElementById('lightbox-caption');
+        const lightboxPrev  = document.getElementById('lightbox-prev');
+        const lightboxNext  = document.getElementById('lightbox-next');
+
+        let previewImages = [];
+        let currentIndex  = 0;
+
+        function buildImageList() {
+            previewImages = Array.from(document.querySelectorAll('.preview-img'));
+        }
+
+        function openLightbox(index) {
+            currentIndex = index;
+            const img = previewImages[currentIndex];
+            lightboxImg.src = img.src;
+            lightboxImg.alt = img.alt;
+            lightboxCaption.textContent = img.dataset.caption || img.alt || '';
+            lightbox.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            updateNavButtons();
+        }
+
+        function closeLightbox() {
+            lightbox.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        function updateNavButtons() {
+            if (previewImages.length <= 1) {
+                lightboxPrev.style.display = 'none';
+                lightboxNext.style.display = 'none';
+            } else {
+                lightboxPrev.style.display = 'flex';
+                lightboxNext.style.display = 'flex';
+            }
+        }
+
+        function prevImage() {
+            currentIndex = (currentIndex - 1 + previewImages.length) % previewImages.length;
+            const img = previewImages[currentIndex];
+            lightboxImg.style.opacity = '0';
+            setTimeout(() => {
+                lightboxImg.src = img.src;
+                lightboxCaption.textContent = img.dataset.caption || img.alt || '';
+                lightboxImg.style.opacity = '1';
+            }, 150);
+        }
+
+        function nextImage() {
+            currentIndex = (currentIndex + 1) % previewImages.length;
+            const img = previewImages[currentIndex];
+            lightboxImg.style.opacity = '0';
+            setTimeout(() => {
+                lightboxImg.src = img.src;
+                lightboxCaption.textContent = img.dataset.caption || img.alt || '';
+                lightboxImg.style.opacity = '1';
+            }, 150);
+        }
+
+        // Initial build
+        buildImageList();
+
+        // Attach click listeners to preview images
+        previewImages.forEach((img, index) => {
+            img.addEventListener('click', () => openLightbox(index));
+        });
+
+        lightboxClose.addEventListener('click', closeLightbox);
+        lightboxPrev.addEventListener('click', prevImage);
+        lightboxNext.addEventListener('click', nextImage);
+
+        // Close on backdrop click
+        lightbox.addEventListener('click', function(e) {
+            if (e.target === lightbox) closeLightbox();
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (!lightbox.classList.contains('active')) return;
+            if (e.key === 'Escape') closeLightbox();
+            if (e.key === 'ArrowLeft') prevImage();
+            if (e.key === 'ArrowRight') nextImage();
+        });
+    </script>
+</body>
+</html>
