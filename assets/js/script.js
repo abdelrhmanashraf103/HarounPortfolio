@@ -3,18 +3,22 @@
 
   // ===== Configuration Constants =====
   const CONFIG = {
-    FORMSPREE_ID: 'f/xjkeqpek',
-    FORMSPREE_URL: 'https://formspree.io/',
-    VISITOR_API: 'https://api.countapi.xyz/hit/abdelrahman-haroun-portfolio/visitors',
-    FORM_SUBMIT_DEBOUNCE: 10000,
-    SCROLL_DEBOUNCE: 150,
-    TOAST_DURATION_SUCCESS: 4000,
-    TOAST_DURATION_ERROR: 6000,
-    INTERSECTION_ROOT_MARGIN: '-80px 0px -80px 0px',
-    PARTICLES_COUNT: 50,
-    PARTICLES_DISTANCE: 140,
-    NAVBAR_SCROLL_OFFSET: 50
-  };
+  FORMSPREE_ID: 'f/xjkeqpek',
+  FORMSPREE_URL: 'https://formspree.io/',
+
+  VISITOR_API_HIT: 'https://counterapi.dev/api/abdelrahman-haroun-portfolio/visitors/up',
+  VISITOR_API_GET: 'https://counterapi.dev/api/abdelrahman-haroun-portfolio/visitors',
+
+  FORM_SUBMIT_DEBOUNCE: 10000,
+  SCROLL_DEBOUNCE: 150,
+  TOAST_DURATION_SUCCESS: 4000,
+  TOAST_DURATION_ERROR: 6000,
+  INTERSECTION_ROOT_MARGIN: '-80px 0px -80px 0px',
+  PARTICLES_COUNT: 50,
+  PARTICLES_DISTANCE: 140,
+  NAVBAR_SCROLL_OFFSET: 50
+};
+
 
   // ===== State Management =====
   const State = {
@@ -574,19 +578,51 @@
     observer.observe(countEl);
   }
 
-  async function fetchVisitorCount() {
-    const countEl = document.getElementById('visitor-count');
-    if (!countEl) return;
+  function animateCounter(element, target) {
+  let start = 0;
+  const duration = 1500;
+  const increment = target / (duration / 16);
 
-    try {
-      const response = await fetchWithTimeout(CONFIG.VISITOR_API, {}, 3000);
-      const data = await response.json();
-      countEl.textContent = data.value || '?';
-    } catch (err) {
-      console.warn('Failed to fetch visitor count:', err);
-      countEl.textContent = '?';
+  function update() {
+    start += increment;
+    if (start < target) {
+      element.textContent = Math.floor(start);
+      requestAnimationFrame(update);
+    } else {
+      element.textContent = target;
     }
   }
+
+  update();
+}
+
+
+ async function fetchVisitorCount() {
+  const countEl = document.getElementById('visitor-count');
+  if (!countEl) return;
+
+  const hasVisited = localStorage.getItem('portfolio_visited');
+
+  try {
+    const url = hasVisited
+      ? CONFIG.VISITOR_API_GET
+      : CONFIG.VISITOR_API_HIT;
+
+    const response = await fetchWithTimeout(url, {}, 3000);
+    const data = await response.json();
+
+    if (!hasVisited) {
+      localStorage.setItem('portfolio_visited', 'true');
+    }
+
+    animateCounter(countEl, data.value || data.count || 0);
+
+  } catch (err) {
+    console.warn('Visitor API failed:', err);
+    countEl.textContent = '—';
+  }
+}
+
 
   // ===== Lazy Loading Images =====
   function initLazyLoading() {
