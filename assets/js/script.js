@@ -159,8 +159,9 @@
     }
   }
 
-  // ===== Mobile Menu Management =====
+  // ===== Mobile Menu Management (محسّن مع رسائل تصحيح) =====
   function initMobileMenu() {
+    console.log('🔧 initMobileMenu called');
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
     const mobileMenu = document.getElementById('mobile-menu');
     const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
@@ -168,23 +169,27 @@
     const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
 
     if (!mobileMenuBtn || !mobileMenu || !mobileMenuOverlay) {
+      console.warn('❌ Mobile menu elements not found');
       return;
     }
+    console.log('✅ Mobile menu elements found');
 
     function openMobileMenu() {
+      console.log('🍔 openMobileMenu triggered');
       mobileMenu.classList.add('active');
       mobileMenuOverlay.classList.add('active');
       document.body.style.overflow = 'hidden';
     }
 
     function closeMobileMenu() {
+      console.log('❌ closeMobileMenu triggered');
       mobileMenu.classList.remove('active');
       mobileMenuOverlay.classList.remove('active');
       document.body.style.overflow = 'auto';
     }
 
     mobileMenuBtn.addEventListener('click', openMobileMenu);
-    closeMenuBtn?.addEventListener('click', closeMobileMenu);
+    if (closeMenuBtn) closeMenuBtn.addEventListener('click', closeMobileMenu);
     mobileMenuOverlay.addEventListener('click', closeMobileMenu);
     mobileNavLinks.forEach(link => {
       link.addEventListener('click', closeMobileMenu);
@@ -590,6 +595,7 @@
 
   // ===== Initialization =====
   function init() {
+    console.log('🚀 Initializing portfolio...');
     initAOS();
     initTypedJS();
     initParticles();
@@ -603,7 +609,7 @@
     initVisitorCounter();
     initLazyLoading();
 
-    console.log('Portfolio initialized successfully');
+    console.log('✅ Portfolio initialized successfully');
   }
 
   if (document.readyState === 'loading') {
