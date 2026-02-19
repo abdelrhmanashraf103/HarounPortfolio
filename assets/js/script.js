@@ -159,7 +159,7 @@
     }
   }
 
-  // ===== Mobile Menu Management (محسّن مع رسائل تصحيح) =====
+  // ===== Mobile Menu Management=====
   function initMobileMenu() {
     console.log('🔧 initMobileMenu called');
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');

@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PRISM Insurance Analytics Dashboard - Abdelrahman Haroun</title>
     
-    <!-- أيقونة الموقع (الصورة الشخصية) -->
     <link rel="icon" type="image/png" href="../../assets/images/icon.png">
 
     <!-- Tailwind -->
@@ -45,7 +44,7 @@
             text-shadow: 0 0 10px var(--primary), 0 0 25px var(--primary);
         }
 
-        /* ===== Navbar محسّن ===== */
+        /* ===== Navbar ===== */
         .nav {
             background: #0a1f2f !important;
             backdrop-filter: blur(8px);
@@ -81,7 +80,6 @@
             text-shadow: 0 0 10px var(--primary), 0 0 20px var(--primary);
         }
 
-        /* زر القائمة للموبايل */
         #mobile-menu-btn {
             background: rgba(0, 238, 255, 0.1);
             border: 1px solid var(--primary);
@@ -103,7 +101,6 @@
             box-shadow: 0 0 20px var(--primary-glow);
         }
 
-        /* تحسين القائمة الجانبية */
         .mobile-menu {
             background: #0a1f2f !important;
             border-right: 2px solid var(--primary);
@@ -131,7 +128,6 @@
             border-left: 4px solid var(--accent);
         }
 
-        /* باقي الأنماط */
         .section-title {
             position: relative;
             display: inline-block;
@@ -259,7 +255,6 @@
             75% { transform: translateY(5px) rotate(-5deg); }
         }
 
-        /* أنيميشن اسم المشروع (ثابت على gradient) */
         .gradient-shift {
             background: linear-gradient(90deg, var(--primary), var(--accent), #8b5cf6, var(--primary));
             background-size: 300% 100%;
@@ -664,7 +659,6 @@
 
                     <h4 class="text-lg font-semibold mb-3 neon">🎥 Demo Video</h4>
                     <div class="w-full aspect-video rounded-lg overflow-hidden border border-gray-600">
-                        <!-- يمكنك استخدام أحد الخيارين التاليين: -->
 
                         <!-- الخيار 1: فيديو من YouTube (iframe) -->
                         <!-- 
@@ -684,7 +678,7 @@
                         <!-- placeholder توضيحي -->
                         <div class="w-full h-full bg-gray-800 flex items-center justify-center text-gray-400">
                             <i class="fas fa-play-circle text-6xl mr-2"></i>
-                            <span class="text-xl">Video will be added here soon</span>
+                            <span class="text-xl">Demo video coming soon</span>
                         </div>
                     </div>
                 </div>
@@ -789,7 +783,6 @@
         mobileMenuOverlay.addEventListener('click', closeMobileMenu);
         mobileNavLinks.forEach(link => link.addEventListener('click', closeMobileMenu));
 
-        // (اختياري: تأثير الجسيمات عند التمرير على العنوان)
         const nameContainer = document.querySelector('h1');
         nameContainer.addEventListener('mousemove', function(e) {
             const particle = document.createElement('div');
