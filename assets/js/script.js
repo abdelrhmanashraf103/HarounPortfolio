@@ -5,7 +5,7 @@
   const CONFIG = {
     FORMSPREE_ID: 'f/xjkeqpek',
     FORMSPREE_URL: 'https://formspree.io/',
-    VISITOR_API: 'https://api.counterapi.dev/v1/abdelrahman-haroun-portfolio/visitors/up',
+    // VISITOR_API: 'https://api.countapi.xyz/hit/abdelrahman-haroun-portfolio/visitors',
     FORM_SUBMIT_DEBOUNCE: 10000,
     SCROLL_DEBOUNCE: 150,
     TOAST_DURATION_SUCCESS: 4000,
@@ -219,6 +219,7 @@
         }
       });
 
+      // Handle last section (contact) — if near bottom of page
       if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 100) {
         const lastSection = sections[sections.length - 1];
         currentId = lastSection.getAttribute('id');
@@ -228,7 +229,7 @@
     }
 
     window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
+    onScroll(); // run on load
   }
 
   // ===== Smart Navbar =====
@@ -439,12 +440,35 @@
       const subject = subjectInput.value.trim();
       const message = messageInput.value.trim();
 
-      if (!name) { showToast('Please enter your name.', 'error'); return false; }
-      if (!email) { showToast('Please enter your email address.', 'error'); return false; }
-      if (!emailRegex.test(email)) { showToast('Please enter a valid email address.', 'error'); return false; }
-      if (!subject) { showToast('Please enter a subject.', 'error'); return false; }
-      if (!message) { showToast('Please enter your message.', 'error'); return false; }
-      if (message.length < 10) { showToast('Message must be at least 10 characters long.', 'error'); return false; }
+      if (!name) {
+        showToast('Please enter your name.', 'error');
+        return false;
+      }
+
+      if (!email) {
+        showToast('Please enter your email address.', 'error');
+        return false;
+      }
+
+      if (!emailRegex.test(email)) {
+        showToast('Please enter a valid email address.', 'error');
+        return false;
+      }
+
+      if (!subject) {
+        showToast('Please enter a subject.', 'error');
+        return false;
+      }
+
+      if (!message) {
+        showToast('Please enter your message.', 'error');
+        return false;
+      }
+
+      if (message.length < 10) {
+        showToast('Message must be at least 10 characters long.', 'error');
+        return false;
+      }
 
       return true;
     }
@@ -468,7 +492,10 @@
       }
 
       if (State.isSubmitting) return;
-      if (!validateForm()) return;
+
+      if (!validateForm()) {
+        return;
+      }
 
       State.isSubmitting = true;
       const originalText = submitBtn.innerHTML;
@@ -495,7 +522,11 @@
 
           if (typeof confetti !== 'undefined') {
             try {
-              confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+              confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+              });
             } catch (err) {
               console.warn('Confetti animation failed:', err);
             }
@@ -510,6 +541,7 @@
         }
       } catch (err) {
         console.error('Form submission error:', err);
+
         if (err.name === 'AbortError') {
           showToast('Request timeout. Please check your connection and try again.', 'error');
         } else if (!navigator.onLine) {
@@ -525,69 +557,88 @@
     });
   }
 
-  // ===== Counter Animation =====
-  function animateCounter(element, target) {
-    let start = 0;
-    const duration = 1500;
-    const increment = Math.max(target / (duration / 16), 1);
+  // ===== Visitor Counter with Lazy Loading =====
+  // function initVisitorCounter() {
+  //   const countEl = document.getElementById('visitor-count');
+  //   if (!countEl) return;
 
-    function update() {
-      start += increment;
-      if (start < target) {
-        element.textContent = Math.floor(start).toLocaleString();
-        requestAnimationFrame(update);
-      } else {
-        element.textContent = target.toLocaleString();
-      }
-    }
+  //   const observer = new IntersectionObserver((entries) => {
+  //     entries.forEach(entry => {
+  //       if (entry.isIntersecting) {
+  //         fetchVisitorCount();
+  //         observer.unobserve(entry.target);
+  //       }
+  //     });
+  //   }, { threshold: 0.1 });
 
-    update();
-  }
+  //   observer.observe(countEl);
+  // }
 
-  // ===== Visitor Counter — Real-time using counterapi.dev =====
-  // counterapi.dev هو البديل المجاني الشغّال لـ CountAPI القديم
-  // يحفظ العداد على سيرفر مشترك → نفس الرقم على كل الأجهزة
-  function initVisitorCounter() {
-    const countEl = document.getElementById('visitor-count');
-    if (!countEl) return;
+//  async function fetchVisitorCount() {
+//   const countEl = document.getElementById('visitor-count');
+//   if (!countEl) return;
 
-    countEl.textContent = '...';
+//   const hasVisited = localStorage.getItem('portfolio_visited');
 
-    // استخدم Intersection Observer لتحميل العداد فقط لما يظهر في الشاشة
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          fetchVisitorCount(countEl);
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.1 });
+//   try {
+//     const url = hasVisited
+//       ? CONFIG.VISITOR_API_GET
+//       : CONFIG.VISITOR_API_HIT;
 
-    observer.observe(countEl);
-  }
+//     const response = await fetchWithTimeout(url, {}, 3000);
+//     const data = await response.json();
 
-  async function fetchVisitorCount(countEl) {
-    try {
-      // /up → يزيد العداد بـ 1 ويرجع القيمة الجديدة
-      const response = await fetchWithTimeout(CONFIG.VISITOR_API, {}, 5000);
+//     if (!hasVisited) {
+//       localStorage.setItem('portfolio_visited', 'true');
+//     }
 
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+//     animateCounter(countEl, data.value || data.count || 0);
 
-      const data = await response.json();
+//   } catch (err) {
+//     console.warn('Visitor API failed:', err);
+//     countEl.textContent = '—';
+//   }
+// }
 
-      // counterapi.dev بيرجع { count: number }
-      const count = data.count ?? data.value;
 
-      if (count !== undefined && count !== null) {
-        animateCounter(countEl, count);
-      } else {
-        throw new Error('Invalid API response');
-      }
-    } catch (err) {
-      console.warn('Visitor counter failed:', err);
-      countEl.textContent = '—';
+
+function animateCounter(element, target) {
+  let start = 0;
+  const duration = 1500;
+  const increment = target / (duration / 16);
+
+  function update() {
+    start += increment;
+    if (start < target) {
+      element.textContent = Math.floor(start);
+      requestAnimationFrame(update);
+    } else {
+      element.textContent = target;
     }
   }
+
+  update();
+}
+
+
+// ===== Local Visitor Counter =====
+function initVisitorCounter() {
+  const countEl = document.getElementById('visitor-count');
+  if (!countEl) return;
+
+  let count = localStorage.getItem('portfolio_visitor_count');
+
+  if (!count) {
+    count = 1;
+  } else {
+    count = parseInt(count) + 1;
+  }
+
+  localStorage.setItem('portfolio_visitor_count', count);
+
+  animateCounter(countEl, count);
+}
+
 
   // ===== Lazy Loading Images =====
   function initLazyLoading() {
