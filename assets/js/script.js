@@ -605,38 +605,58 @@
 function animateCounter(element, target) {
   let start = 0;
   const duration = 1500;
-  const increment = target / (duration / 16);
+  const increment = Math.max(target / (duration / 16), 1);
 
   function update() {
     start += increment;
     if (start < target) {
-      element.textContent = Math.floor(start);
+      element.textContent = Math.floor(start).toLocaleString();
       requestAnimationFrame(update);
     } else {
-      element.textContent = target;
+      element.textContent = Number(target).toLocaleString();
     }
   }
 
   update();
 }
 
-
-// ===== Local Visitor Counter =====
+// ===== Visitor Counter via GoatCounter API =====
 function initVisitorCounter() {
   const countEl = document.getElementById('visitor-count');
   if (!countEl) return;
 
-  let count = localStorage.getItem('portfolio_visitor_count');
+  countEl.textContent = '...';
 
-  if (!count) {
-    count = 1;
-  } else {
-    count = parseInt(count) + 1;
-  }
+  // GoatCounter API — يجيب total page views لموقعك
+  const SITE = 'abdelrahmanharoun'; // site code بتاعك في GoatCounter
+  const apiUrl = `https://${SITE}.goatcounter.com/api/v0/stats/hits?daily=false&limit=1`;
 
-  localStorage.setItem('portfolio_visitor_count', count);
-
-  animateCounter(countEl, count);
+  fetch(apiUrl, {
+    headers: { 'Content-Type': 'application/json' }
+  })
+    .then(res => {
+      if (!res.ok) throw new Error('API error');
+      return res.json();
+    })
+    .then(data => {
+      // GoatCounter بيرجع hits array — نجمع كل الـ count
+      const total = (data.hits || []).reduce((sum, h) => sum + (h.count || 0), 0);
+      if (total > 0) {
+        animateCounter(countEl, total);
+      } else {
+        // لو الـ API رجع 0 أو فارغ، نجرب endpoint تاني
+        return fetch(`https://${SITE}.goatcounter.com/api/v0/stats/total`)
+          .then(r => r.json())
+          .then(d => {
+            const count = d.total || d.count || 0;
+            animateCounter(countEl, Math.max(count, 1));
+          });
+      }
+    })
+    .catch(() => {
+      // Fallback: نعرض رقم بناءً على session عشان مايوقفش
+      countEl.textContent = '—';
+    });
 }
 
 
