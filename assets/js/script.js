@@ -1,4 +1,3 @@
-// ===== script.js المعدل بالكامل =====
 (function () {
   'use strict';
 
@@ -6,9 +5,8 @@
   const CONFIG = {
     FORMSPREE_ID: 'f/xjkeqpek',
     FORMSPREE_URL: 'https://formspree.io/',
-    // GoatCounter API settings (يمكنك تعديلها)
-    GOATCOUNTER_DOMAIN: 'abdelrahmanharoun', // اسم نطاقك في GoatCounter
-    GOATCOUNTER_API_KEY: '', // اتركه فارغاً إذا كان الموقع عاماً، وإلا ضع المفتاح من حسابك
+    // استخدام CountAPI بدلاً من GoatCounter (أبسط وأضمن)
+    VISITOR_API: 'https://api.countapi.xyz/hit/abdelrahman-haroun-portfolio/visitors',
     FORM_SUBMIT_DEBOUNCE: 10000,
     SCROLL_DEBOUNCE: 150,
     TOAST_DURATION_SUCCESS: 4000,
@@ -30,6 +28,7 @@
   };
 
   // ===== Utility Functions =====
+
   function debounce(func, delay) {
     let timeoutId;
     return function (...args) {
@@ -558,24 +557,19 @@
     });
   }
 
-  // ===== Visitor Counter with GoatCounter API =====
+  // ===== Visitor Counter - الحل النهائي والموحد =====
   function initVisitorCounter() {
     const countEl = document.getElementById('visitor-count');
     if (!countEl) return;
 
-    // عرض قيمة أولية من localStorage (إن وجدت)
-    const localCount = localStorage.getItem('portfolio_visitor_count');
-    if (localCount) {
-      countEl.textContent = localCount;
-    } else {
-      countEl.textContent = '0';
-    }
+    // عرض قيمة أولية من localStorage (إذا وجدت) أو 0
+    countEl.textContent = localStorage.getItem('portfolio_visitor_count') || '0';
 
-    // استخدام Intersection Observer لتحميل العداد عندما يظهر العنصر
+    // استخدام Intersection Observer لتجنب جلب البيانات إذا لم يظهر العنصر
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
-          fetchGoatCounterCount();
+          fetchUnifiedCount();
           observer.unobserve(entry.target);
         }
       });
@@ -584,42 +578,40 @@
     observer.observe(countEl);
   }
 
-  async function fetchGoatCounterCount() {
+  async function fetchUnifiedCount(retries = 2) {
     const countEl = document.getElementById('visitor-count');
     if (!countEl) return;
 
-    try {
-      let url = `https://${CONFIG.GOATCOUNTER_DOMAIN}.goatcounter.com/api/v0/stats/total`;
-      const headers = {};
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        // استخدام CountAPI (يعمل بدون مشاكل CORS)
+        const response = await fetchWithTimeout(CONFIG.VISITOR_API, {}, 5000);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        const data = await response.json();
+        const count = data.value; // CountAPI يعيد { value: number }
 
-      // إذا كان لديك مفتاح API، أضفه هنا
-      if (CONFIG.GOATCOUNTER_API_KEY) {
-        headers['Authorization'] = `Bearer ${CONFIG.GOATCOUNTER_API_KEY}`;
+        if (count !== undefined) {
+          // تخزين العدد في localStorage واستخدامه مستقبلاً
+          localStorage.setItem('portfolio_visitor_count', count);
+          animateCounter(countEl, count);
+          return; // نجاح
+        } else {
+          throw new Error('Invalid API response');
+        }
+      } catch (err) {
+        console.warn(`Attempt ${attempt + 1} failed:`, err.message);
+        if (attempt === retries) {
+          // إذا فشلت كل المحاولات، استخدم العداد المحلي كحل أخير
+          let localCount = parseInt(localStorage.getItem('portfolio_visitor_count') || '0');
+          localCount += 1; // زيادة بمقدار 1 (محاكاة زيارة جديدة)
+          localStorage.setItem('portfolio_visitor_count', localCount);
+          animateCounter(countEl, localCount);
+        } else {
+          // انتظر قليلاً قبل إعادة المحاولة
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
       }
-
-      const response = await fetchWithTimeout(url, { headers }, 5000);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
-
-      const data = await response.json();
-      // الـ API يعيد JSON يحتوي على "count" أو "total"
-      const count = data.count || data.total || 0;
-
-      // تخزين العدد في localStorage للاستخدام المستقبلي
-      localStorage.setItem('portfolio_visitor_count', count);
-
-      // عرض العدد مع حركة تصاعدية
-      animateCounter(countEl, count);
-    } catch (err) {
-      console.warn('GoatCounter API failed, using local fallback:', err);
-
-      // استخدم localStorage المحلي كاحتياطي (زيادة بمقدار 1)
-      let localCount = parseInt(localStorage.getItem('portfolio_visitor_count') || '0');
-      localCount += 1;
-      localStorage.setItem('portfolio_visitor_count', localCount);
-      animateCounter(countEl, localCount);
     }
   }
 
@@ -641,7 +633,7 @@
     update();
   }
 
-  // ===== Lazy Loading Images (placeholder) =====
+  // ===== Lazy Loading Images =====
   function initLazyLoading() {
     console.log('Lazy loading enabled for images');
   }
