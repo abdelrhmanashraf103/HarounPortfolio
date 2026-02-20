@@ -576,31 +576,32 @@
   }
 
   async function fetchVisitorCount() {
-    const countEl = document.getElementById('visitor-count');
-    if (!countEl) return;
+  const countEl = document.getElementById('visitor-count');
+  if (!countEl) return;
 
-    try {
-      // استدعاء CountAPI لزيادة العداد وإرجاع القيمة الجديدة
-      const response = await fetchWithTimeout(CONFIG.VISITOR_API, {}, 3000);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      // التأكد من وجود القيمة
-      const count = data.value;
-      if (count !== undefined) {
-        animateCounter(countEl, count);
-      } else {
-        throw new Error('Invalid response from counter API');
-      }
-    } catch (err) {
-      console.warn('Visitor counter failed:', err);
-      countEl.textContent = '—'; // عرض شرطة في حالة الفشل
+  try {
+    const response = await fetch(CONFIG.VISITOR_API, {
+      method: 'GET',
+      cache: 'no-store'
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error ${response.status}`);
     }
+
+    const data = await response.json();
+
+    if (typeof data.value === 'number') {
+      countEl.textContent = data.value.toLocaleString();
+    } else {
+      throw new Error('Invalid counter response');
+    }
+
+  } catch (error) {
+    console.error('Visitor Counter Error:', error);
+    countEl.textContent = '0';
   }
+}
 
   function animateCounter(element, target) {
     let start = 0;
