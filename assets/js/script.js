@@ -5,8 +5,7 @@
   const CONFIG = {
     FORMSPREE_ID: 'f/xjkeqpek',
     FORMSPREE_URL: 'https://formspree.io/',
-    // استخدام CountAPI بدلاً من GoatCounter (أبسط وأضمن)
-    VISITOR_API: 'https://api.countapi.xyz/hit/abdelrahman-haroun-portfolio/visitors',
+    // VISITOR_API: 'https://api.countapi.xyz/hit/abdelrahman-haroun-portfolio/visitors',
     FORM_SUBMIT_DEBOUNCE: 10000,
     SCROLL_DEBOUNCE: 150,
     TOAST_DURATION_SUCCESS: 4000,
@@ -220,6 +219,7 @@
         }
       });
 
+      // Handle last section (contact) — if near bottom of page
       if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 100) {
         const lastSection = sections[sections.length - 1];
         currentId = lastSection.getAttribute('id');
@@ -229,7 +229,7 @@
     }
 
     window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
+    onScroll(); // run on load
   }
 
   // ===== Smart Navbar =====
@@ -557,81 +557,88 @@
     });
   }
 
-  // ===== Visitor Counter - الحل النهائي والموحد =====
-  function initVisitorCounter() {
-    const countEl = document.getElementById('visitor-count');
-    if (!countEl) return;
+  // ===== Visitor Counter with Lazy Loading =====
+  // function initVisitorCounter() {
+  //   const countEl = document.getElementById('visitor-count');
+  //   if (!countEl) return;
 
-    // عرض قيمة أولية من localStorage (إذا وجدت) أو 0
-    countEl.textContent = localStorage.getItem('portfolio_visitor_count') || '0';
+  //   const observer = new IntersectionObserver((entries) => {
+  //     entries.forEach(entry => {
+  //       if (entry.isIntersecting) {
+  //         fetchVisitorCount();
+  //         observer.unobserve(entry.target);
+  //       }
+  //     });
+  //   }, { threshold: 0.1 });
 
-    // استخدام Intersection Observer لتجنب جلب البيانات إذا لم يظهر العنصر
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          fetchUnifiedCount();
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.1 });
+  //   observer.observe(countEl);
+  // }
 
-    observer.observe(countEl);
-  }
+//  async function fetchVisitorCount() {
+//   const countEl = document.getElementById('visitor-count');
+//   if (!countEl) return;
 
-  async function fetchUnifiedCount(retries = 2) {
-    const countEl = document.getElementById('visitor-count');
-    if (!countEl) return;
+//   const hasVisited = localStorage.getItem('portfolio_visited');
 
-    for (let attempt = 0; attempt <= retries; attempt++) {
-      try {
-        // استخدام CountAPI (يعمل بدون مشاكل CORS)
-        const response = await fetchWithTimeout(CONFIG.VISITOR_API, {}, 5000);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        
-        const data = await response.json();
-        const count = data.value; // CountAPI يعيد { value: number }
+//   try {
+//     const url = hasVisited
+//       ? CONFIG.VISITOR_API_GET
+//       : CONFIG.VISITOR_API_HIT;
 
-        if (count !== undefined) {
-          // تخزين العدد في localStorage واستخدامه مستقبلاً
-          localStorage.setItem('portfolio_visitor_count', count);
-          animateCounter(countEl, count);
-          return; // نجاح
-        } else {
-          throw new Error('Invalid API response');
-        }
-      } catch (err) {
-        console.warn(`Attempt ${attempt + 1} failed:`, err.message);
-        if (attempt === retries) {
-          // إذا فشلت كل المحاولات، استخدم العداد المحلي كحل أخير
-          let localCount = parseInt(localStorage.getItem('portfolio_visitor_count') || '0');
-          localCount += 1; // زيادة بمقدار 1 (محاكاة زيارة جديدة)
-          localStorage.setItem('portfolio_visitor_count', localCount);
-          animateCounter(countEl, localCount);
-        } else {
-          // انتظر قليلاً قبل إعادة المحاولة
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-      }
+//     const response = await fetchWithTimeout(url, {}, 3000);
+//     const data = await response.json();
+
+//     if (!hasVisited) {
+//       localStorage.setItem('portfolio_visited', 'true');
+//     }
+
+//     animateCounter(countEl, data.value || data.count || 0);
+
+//   } catch (err) {
+//     console.warn('Visitor API failed:', err);
+//     countEl.textContent = '—';
+//   }
+// }
+
+
+
+function animateCounter(element, target) {
+  let start = 0;
+  const duration = 1500;
+  const increment = target / (duration / 16);
+
+  function update() {
+    start += increment;
+    if (start < target) {
+      element.textContent = Math.floor(start);
+      requestAnimationFrame(update);
+    } else {
+      element.textContent = target;
     }
   }
 
-  function animateCounter(element, target) {
-    let start = 0;
-    const duration = 1500;
-    const increment = target / (duration / 16);
+  update();
+}
 
-    function update() {
-      start += increment;
-      if (start < target) {
-        element.textContent = Math.floor(start);
-        requestAnimationFrame(update);
-      } else {
-        element.textContent = target;
-      }
-    }
 
-    update();
+// ===== Local Visitor Counter =====
+function initVisitorCounter() {
+  const countEl = document.getElementById('visitor-count');
+  if (!countEl) return;
+
+  let count = localStorage.getItem('portfolio_visitor_count');
+
+  if (!count) {
+    count = 1;
+  } else {
+    count = parseInt(count) + 1;
   }
+
+  localStorage.setItem('portfolio_visitor_count', count);
+
+  animateCounter(countEl, count);
+}
+
 
   // ===== Lazy Loading Images =====
   function initLazyLoading() {
@@ -651,7 +658,7 @@
     initPagination();
     initFilterTabs();
     initContactForm();
-    initVisitorCounter(); // العداد الجديد
+    initVisitorCounter();
     initLazyLoading();
 
     console.log('✅ Portfolio initialized successfully');
