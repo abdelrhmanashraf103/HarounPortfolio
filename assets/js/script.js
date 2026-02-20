@@ -5,7 +5,7 @@
   const CONFIG = {
     FORMSPREE_ID: 'f/xjkeqpek',
     FORMSPREE_URL: 'https://formspree.io/',
-    VISITOR_API: 'https://api.countapi.xyz/hit/abdelrahman-haroun-portfolio/visitors', // استخدم هذا الرابط
+    VISITOR_API: 'https://api.countapi.xyz/hit/abdelrahman-haroun-portfolio/visitors',
     FORM_SUBMIT_DEBOUNCE: 10000,
     SCROLL_DEBOUNCE: 150,
     TOAST_DURATION_SUCCESS: 4000,
@@ -555,15 +555,12 @@
     });
   }
 
-  // ===== Visitor Counter - الحل النهائي (الموحد) =====
   function initVisitorCounter() {
     const countEl = document.getElementById('visitor-count');
     if (!countEl) return;
 
-    // عرض مؤقت "..." لحين التحميل
     countEl.textContent = '...';
 
-    // استخدام Intersection Observer لتحميل العداد فقط عندما يظهر العنصر
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
@@ -581,12 +578,11 @@
     if (!countEl) return;
 
     try {
-      // محاولة جلب العدد من CountAPI مع مهلة 5 ثوانٍ
       const response = await fetchWithTimeout(CONFIG.VISITOR_API, {}, 5000);
       if (!response.ok) throw new Error(`HTTP error ${response.status}`);
       
       const data = await response.json();
-      const count = data.value; // CountAPI يعيد { value: number }
+      const count = data.value; // CountAPI
 
       if (count !== undefined) {
         animateCounter(countEl, count);
@@ -595,10 +591,8 @@
       }
     } catch (err) {
       console.error('Visitor counter failed:', err);
-      // في حالة الفشل، عرض "؟" للإشارة إلى خطأ
       countEl.textContent = '?';
       
-      // محاولة إعادة الاتصال بعد 10 ثوانٍ (اختياري)
       setTimeout(() => {
         if (countEl.textContent === '?') {
           fetchRealCount();
@@ -643,7 +637,7 @@
     initPagination();
     initFilterTabs();
     initContactForm();
-    initVisitorCounter(); // العداد الجديد
+    initVisitorCounter();
     initLazyLoading();
 
     console.log('✅ Portfolio initialized successfully');
