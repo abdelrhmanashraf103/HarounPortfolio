@@ -5,7 +5,7 @@
   const CONFIG = {
     FORMSPREE_ID: 'f/xjkeqpek',
     FORMSPREE_URL: 'https://formspree.io/',
-    // VISITOR_API: 'https://api.countapi.xyz/hit/abdelrahman-haroun-portfolio/visitors',
+    VISITOR_API: 'https://api.countapi.xyz/hit/abdelrahman-haroun-portfolio/visitors', // استخدم هذا الرابط
     FORM_SUBMIT_DEBOUNCE: 10000,
     SCROLL_DEBOUNCE: 150,
     TOAST_DURATION_SUCCESS: 4000,
@@ -27,7 +27,6 @@
   };
 
   // ===== Utility Functions =====
-
   function debounce(func, delay) {
     let timeoutId;
     return function (...args) {
@@ -219,7 +218,6 @@
         }
       });
 
-      // Handle last section (contact) — if near bottom of page
       if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 100) {
         const lastSection = sections[sections.length - 1];
         currentId = lastSection.getAttribute('id');
@@ -229,7 +227,7 @@
     }
 
     window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll(); // run on load
+    onScroll();
   }
 
   // ===== Smart Navbar =====
@@ -557,88 +555,75 @@
     });
   }
 
-  // ===== Visitor Counter with Lazy Loading =====
-  // function initVisitorCounter() {
-  //   const countEl = document.getElementById('visitor-count');
-  //   if (!countEl) return;
+  // ===== Visitor Counter - الحل النهائي (الموحد) =====
+  function initVisitorCounter() {
+    const countEl = document.getElementById('visitor-count');
+    if (!countEl) return;
 
-  //   const observer = new IntersectionObserver((entries) => {
-  //     entries.forEach(entry => {
-  //       if (entry.isIntersecting) {
-  //         fetchVisitorCount();
-  //         observer.unobserve(entry.target);
-  //       }
-  //     });
-  //   }, { threshold: 0.1 });
+    // عرض مؤقت "..." لحين التحميل
+    countEl.textContent = '...';
 
-  //   observer.observe(countEl);
-  // }
+    // استخدام Intersection Observer لتحميل العداد فقط عندما يظهر العنصر
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          fetchRealCount();
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
 
-//  async function fetchVisitorCount() {
-//   const countEl = document.getElementById('visitor-count');
-//   if (!countEl) return;
+    observer.observe(countEl);
+  }
 
-//   const hasVisited = localStorage.getItem('portfolio_visited');
+  async function fetchRealCount() {
+    const countEl = document.getElementById('visitor-count');
+    if (!countEl) return;
 
-//   try {
-//     const url = hasVisited
-//       ? CONFIG.VISITOR_API_GET
-//       : CONFIG.VISITOR_API_HIT;
+    try {
+      // محاولة جلب العدد من CountAPI مع مهلة 5 ثوانٍ
+      const response = await fetchWithTimeout(CONFIG.VISITOR_API, {}, 5000);
+      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+      
+      const data = await response.json();
+      const count = data.value; // CountAPI يعيد { value: number }
 
-//     const response = await fetchWithTimeout(url, {}, 3000);
-//     const data = await response.json();
-
-//     if (!hasVisited) {
-//       localStorage.setItem('portfolio_visited', 'true');
-//     }
-
-//     animateCounter(countEl, data.value || data.count || 0);
-
-//   } catch (err) {
-//     console.warn('Visitor API failed:', err);
-//     countEl.textContent = '—';
-//   }
-// }
-
-
-
-function animateCounter(element, target) {
-  let start = 0;
-  const duration = 1500;
-  const increment = target / (duration / 16);
-
-  function update() {
-    start += increment;
-    if (start < target) {
-      element.textContent = Math.floor(start);
-      requestAnimationFrame(update);
-    } else {
-      element.textContent = target;
+      if (count !== undefined) {
+        animateCounter(countEl, count);
+      } else {
+        throw new Error('Invalid API response: missing value');
+      }
+    } catch (err) {
+      console.error('Visitor counter failed:', err);
+      // في حالة الفشل، عرض "؟" للإشارة إلى خطأ
+      countEl.textContent = '?';
+      
+      // محاولة إعادة الاتصال بعد 10 ثوانٍ (اختياري)
+      setTimeout(() => {
+        if (countEl.textContent === '?') {
+          fetchRealCount();
+        }
+      }, 10000);
     }
   }
 
-  update();
-}
+  function animateCounter(element, target) {
+    let start = 0;
+    const duration = 1500;
+    const increment = target / (duration / 16);
 
+    function update() {
+      start += increment;
+      if (start < target) {
+        element.textContent = Math.floor(start);
+        requestAnimationFrame(update);
+      } else {
+        element.textContent = target;
+      }
+    }
 
-// ===== Local Visitor Counter =====
-function initVisitorCounter() {
-  const countEl = document.getElementById('visitor-count');
-  if (!countEl) return;
-
-  let count = localStorage.getItem('portfolio_visitor_count');
-
-  if (!count) {
-    count = 1;
-  } else {
-    count = parseInt(count) + 1;
+    update();
   }
-
-  localStorage.setItem('portfolio_visitor_count', count);
-
-  animateCounter(countEl, count);
-}
-
 
   // ===== Lazy Loading Images =====
   function initLazyLoading() {
@@ -658,7 +643,7 @@ function initVisitorCounter() {
     initPagination();
     initFilterTabs();
     initContactForm();
-    initVisitorCounter();
+    initVisitorCounter(); // العداد الجديد
     initLazyLoading();
 
     console.log('✅ Portfolio initialized successfully');
