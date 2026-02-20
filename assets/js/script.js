@@ -5,8 +5,7 @@
   const CONFIG = {
     FORMSPREE_ID: 'f/xjkeqpek',
     FORMSPREE_URL: 'https://formspree.io/',
-    VISITOR_NAMESPACE: 'abdelrahman-haroun-portfolio',
-    VISITOR_KEY: 'visitors',
+    VISITOR_API: 'https://api.countapi.xyz/hit/abdelrahman-haroun-portfolio/visitors', // رابط CountAPI
     FORM_SUBMIT_DEBOUNCE: 10000,
     SCROLL_DEBOUNCE: 150,
     TOAST_DURATION_SUCCESS: 4000,
@@ -558,7 +557,51 @@
     });
   }
 
-  // ===== Counter Animation =====
+  // ===== Visitor Counter with Lazy Loading (using CountAPI) =====
+  function initVisitorCounter() {
+    const countEl = document.getElementById('visitor-count');
+    if (!countEl) return;
+
+    // استخدم Intersection Observer لتحميل العداد فقط عندما يظهر العنصر
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          fetchVisitorCount();
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    observer.observe(countEl);
+  }
+
+  async function fetchVisitorCount() {
+    const countEl = document.getElementById('visitor-count');
+    if (!countEl) return;
+
+    try {
+      // استدعاء CountAPI لزيادة العداد وإرجاع القيمة الجديدة
+      const response = await fetchWithTimeout(CONFIG.VISITOR_API, {}, 3000);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // التأكد من وجود القيمة
+      const count = data.value;
+      if (count !== undefined) {
+        animateCounter(countEl, count);
+      } else {
+        throw new Error('Invalid response from counter API');
+      }
+    } catch (err) {
+      console.warn('Visitor counter failed:', err);
+      countEl.textContent = '—'; // عرض شرطة في حالة الفشل
+    }
+  }
+
   function animateCounter(element, target) {
     let start = 0;
     const duration = 1500;
@@ -575,38 +618,6 @@
     }
 
     update();
-  }
-
-  // ===== Visitor Counter — Real-time using CountAPI =====
-  // Uses https://api.countapi.xyz — مجاني، بدون تسجيل، يحفظ العداد على سيرفر خارجي
-  // بالتالي أي جهاز يفتح الموقع يرى نفس الرقم المحدّث
-  function initVisitorCounter() {
-    const countEl = document.getElementById('visitor-count');
-    if (!countEl) return;
-
-    // عرض ... أثناء التحميل
-    countEl.textContent = '...';
-
-    const namespace = CONFIG.VISITOR_NAMESPACE;
-    const key = CONFIG.VISITOR_KEY;
-
-    // نستخدم hit endpoint لزيادة العداد وجلب القيمة الجديدة في نفس الوقت
-    const hitUrl = `https://api.countapi.xyz/hit/${namespace}/${key}`;
-
-    fetch(hitUrl)
-      .then(res => {
-        if (!res.ok) throw new Error('CountAPI request failed');
-        return res.json();
-      })
-      .then(data => {
-        const count = data.value || 0;
-        animateCounter(countEl, count);
-      })
-      .catch(err => {
-        console.warn('Visitor counter failed:', err);
-        // Fallback: عرض شرطة بدل الرقم لو فشل
-        countEl.textContent = '—';
-      });
   }
 
   // ===== Lazy Loading Images =====
@@ -627,7 +638,7 @@
     initPagination();
     initFilterTabs();
     initContactForm();
-    initVisitorCounter();
+    initVisitorCounter(); // تم تفعيل العداد المركزي
     initLazyLoading();
 
     console.log('✅ Portfolio initialized successfully');
