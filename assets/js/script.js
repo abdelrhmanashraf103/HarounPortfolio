@@ -1,3 +1,4 @@
+// ===== script.js المعدل بالكامل =====
 (function () {
   'use strict';
 
@@ -5,7 +6,9 @@
   const CONFIG = {
     FORMSPREE_ID: 'f/xjkeqpek',
     FORMSPREE_URL: 'https://formspree.io/',
-    // VISITOR_API: 'https://api.countapi.xyz/hit/abdelrahman-haroun-portfolio/visitors',
+    // GoatCounter API settings (يمكنك تعديلها)
+    GOATCOUNTER_DOMAIN: 'abdelrahmanharoun', // اسم نطاقك في GoatCounter
+    GOATCOUNTER_API_KEY: '', // اتركه فارغاً إذا كان الموقع عاماً، وإلا ضع المفتاح من حسابك
     FORM_SUBMIT_DEBOUNCE: 10000,
     SCROLL_DEBOUNCE: 150,
     TOAST_DURATION_SUCCESS: 4000,
@@ -27,7 +30,6 @@
   };
 
   // ===== Utility Functions =====
-
   function debounce(func, delay) {
     let timeoutId;
     return function (...args) {
@@ -219,7 +221,6 @@
         }
       });
 
-      // Handle last section (contact) — if near bottom of page
       if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 100) {
         const lastSection = sections[sections.length - 1];
         currentId = lastSection.getAttribute('id');
@@ -229,7 +230,7 @@
     }
 
     window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll(); // run on load
+    onScroll();
   }
 
   // ===== Smart Navbar =====
@@ -557,110 +558,90 @@
     });
   }
 
-  // ===== Visitor Counter with Lazy Loading =====
-  // function initVisitorCounter() {
-  //   const countEl = document.getElementById('visitor-count');
-  //   if (!countEl) return;
+  // ===== Visitor Counter with GoatCounter API =====
+  function initVisitorCounter() {
+    const countEl = document.getElementById('visitor-count');
+    if (!countEl) return;
 
-  //   const observer = new IntersectionObserver((entries) => {
-  //     entries.forEach(entry => {
-  //       if (entry.isIntersecting) {
-  //         fetchVisitorCount();
-  //         observer.unobserve(entry.target);
-  //       }
-  //     });
-  //   }, { threshold: 0.1 });
-
-  //   observer.observe(countEl);
-  // }
-
-//  async function fetchVisitorCount() {
-//   const countEl = document.getElementById('visitor-count');
-//   if (!countEl) return;
-
-//   const hasVisited = localStorage.getItem('portfolio_visited');
-
-//   try {
-//     const url = hasVisited
-//       ? CONFIG.VISITOR_API_GET
-//       : CONFIG.VISITOR_API_HIT;
-
-//     const response = await fetchWithTimeout(url, {}, 3000);
-//     const data = await response.json();
-
-//     if (!hasVisited) {
-//       localStorage.setItem('portfolio_visited', 'true');
-//     }
-
-//     animateCounter(countEl, data.value || data.count || 0);
-
-//   } catch (err) {
-//     console.warn('Visitor API failed:', err);
-//     countEl.textContent = '—';
-//   }
-// }
-
-
-
-function animateCounter(element, target) {
-  let start = 0;
-  const duration = 1500;
-  const increment = Math.max(target / (duration / 16), 1);
-
-  function update() {
-    start += increment;
-    if (start < target) {
-      element.textContent = Math.floor(start).toLocaleString();
-      requestAnimationFrame(update);
+    // عرض قيمة أولية من localStorage (إن وجدت)
+    const localCount = localStorage.getItem('portfolio_visitor_count');
+    if (localCount) {
+      countEl.textContent = localCount;
     } else {
-      element.textContent = Number(target).toLocaleString();
+      countEl.textContent = '0';
+    }
+
+    // استخدام Intersection Observer لتحميل العداد عندما يظهر العنصر
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          fetchGoatCounterCount();
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    observer.observe(countEl);
+  }
+
+  async function fetchGoatCounterCount() {
+    const countEl = document.getElementById('visitor-count');
+    if (!countEl) return;
+
+    try {
+      let url = `https://${CONFIG.GOATCOUNTER_DOMAIN}.goatcounter.com/api/v0/stats/total`;
+      const headers = {};
+
+      // إذا كان لديك مفتاح API، أضفه هنا
+      if (CONFIG.GOATCOUNTER_API_KEY) {
+        headers['Authorization'] = `Bearer ${CONFIG.GOATCOUNTER_API_KEY}`;
+      }
+
+      const response = await fetchWithTimeout(url, { headers }, 5000);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}`);
+      }
+
+      const data = await response.json();
+      // الـ API يعيد JSON يحتوي على "count" أو "total"
+      const count = data.count || data.total || 0;
+
+      // تخزين العدد في localStorage للاستخدام المستقبلي
+      localStorage.setItem('portfolio_visitor_count', count);
+
+      // عرض العدد مع حركة تصاعدية
+      animateCounter(countEl, count);
+    } catch (err) {
+      console.warn('GoatCounter API failed, using local fallback:', err);
+
+      // استخدم localStorage المحلي كاحتياطي (زيادة بمقدار 1)
+      let localCount = parseInt(localStorage.getItem('portfolio_visitor_count') || '0');
+      localCount += 1;
+      localStorage.setItem('portfolio_visitor_count', localCount);
+      animateCounter(countEl, localCount);
     }
   }
 
-  update();
-}
+  function animateCounter(element, target) {
+    let start = 0;
+    const duration = 1500;
+    const increment = target / (duration / 16);
 
-// ===== Visitor Counter via GoatCounter API =====
-function initVisitorCounter() {
-  const countEl = document.getElementById('visitor-count');
-  if (!countEl) return;
-
-  countEl.textContent = '...';
-
-  // GoatCounter API — يجيب total page views لموقعك
-  const SITE = 'abdelrahmanharoun'; // site code بتاعك في GoatCounter
-  const apiUrl = `https://${SITE}.goatcounter.com/api/v0/stats/hits?daily=false&limit=1`;
-
-  fetch(apiUrl, {
-    headers: { 'Content-Type': 'application/json' }
-  })
-    .then(res => {
-      if (!res.ok) throw new Error('API error');
-      return res.json();
-    })
-    .then(data => {
-      // GoatCounter بيرجع hits array — نجمع كل الـ count
-      const total = (data.hits || []).reduce((sum, h) => sum + (h.count || 0), 0);
-      if (total > 0) {
-        animateCounter(countEl, total);
+    function update() {
+      start += increment;
+      if (start < target) {
+        element.textContent = Math.floor(start);
+        requestAnimationFrame(update);
       } else {
-        // لو الـ API رجع 0 أو فارغ، نجرب endpoint تاني
-        return fetch(`https://${SITE}.goatcounter.com/api/v0/stats/total`)
-          .then(r => r.json())
-          .then(d => {
-            const count = d.total || d.count || 0;
-            animateCounter(countEl, Math.max(count, 1));
-          });
+        element.textContent = target;
       }
-    })
-    .catch(() => {
-      // Fallback: نعرض رقم بناءً على session عشان مايوقفش
-      countEl.textContent = '—';
-    });
-}
+    }
 
+    update();
+  }
 
-  // ===== Lazy Loading Images =====
+  // ===== Lazy Loading Images (placeholder) =====
   function initLazyLoading() {
     console.log('Lazy loading enabled for images');
   }
@@ -678,7 +659,7 @@ function initVisitorCounter() {
     initPagination();
     initFilterTabs();
     initContactForm();
-    initVisitorCounter();
+    initVisitorCounter(); // العداد الجديد
     initLazyLoading();
 
     console.log('✅ Portfolio initialized successfully');
