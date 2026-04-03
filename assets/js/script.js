@@ -1,6 +1,6 @@
 /*
  * A³H Portfolio - Main Script File
- * Version: 2.2 (Improved Visitor Counter with Multiple Proxies)
+ * Version: 3.0 (Fixed Visitor Counter - No CORS Proxies)
  * Author: Abdelrahman Haroun
  * Description: Handles all frontend interactions, animations, and API calls.
  */
@@ -13,6 +13,7 @@
     FORMSPREE_ID: 'f/xjkeqpek',
     FORMSPREE_URL: 'https://formspree.io/',
     VISITOR_API: 'https://api.counterapi.dev/v1/abdelrahman-haroun-portfolio/visitors/up',
+    GOATCOUNTER_API: 'https://abdelrahmanharoun.goatcounter.com/counter//_.json',
     FORM_SUBMIT_DEBOUNCE: 10000,
     SCROLL_DEBOUNCE: 150,
     TOAST_DURATION_SUCCESS: 4000,
@@ -291,27 +292,31 @@
     }
 
     if (prevBtn && nextBtn) {
-      prevBtn.addEventListener('click', () => { if (State.currentPage > 1) { State.currentPage--; showPage(); filterProjects(); } });
-      nextBtn.addEventListener('click', () => { if (State.currentPage < totalPages) { State.currentPage++; showPage(); filterProjects(); } });
+      prevBtn.addEventListener('click', () => {
+        if (State.currentPage > 1) { State.currentPage--; showPage(); filterProjects(); }
+      });
+      nextBtn.addEventListener('click', () => {
+        if (State.currentPage < totalPages) { State.currentPage++; showPage(); filterProjects(); }
+      });
     }
 
     createPageNumbers();
     showPage();
   }
 
+  function filterProjects() {
+    const allCards = document.querySelectorAll('.card');
+    allCards.forEach(card => {
+      const category = card.getAttribute('data-category');
+      card.style.display = (State.currentFilter === 'all' || category === State.currentFilter) ? '' : 'none';
+    });
+  }
+
   function initFilterTabs() {
     const filterBtns = document.querySelectorAll('.filter-btn');
-    const allCards = document.querySelectorAll('.card');
     const pages = document.querySelectorAll('.project-page');
 
     if (filterBtns.length === 0) return;
-
-    function filterProjects() {
-      allCards.forEach(card => {
-        const category = card.getAttribute('data-category');
-        card.style.display = (State.currentFilter === 'all' || category === State.currentFilter) ? '' : 'none';
-      });
-    }
 
     function goToFirstPageWithCategory(category) {
       if (category === 'all') {
@@ -332,6 +337,23 @@
         btn.classList.add('active');
         State.currentFilter = btn.getAttribute('data-filter');
         goToFirstPageWithCategory(State.currentFilter);
+
+        const pages = document.querySelectorAll('.project-page');
+        pages.forEach((page, index) => {
+          const isCurrent = index + 1 === State.currentPage;
+          page.classList.toggle('active', isCurrent);
+          page.classList.toggle('hidden', !isCurrent);
+        });
+
+        const prevBtn = document.getElementById('prev-page');
+        const nextBtn = document.getElementById('next-page');
+        if (prevBtn) prevBtn.disabled = State.currentPage === 1;
+        if (nextBtn) nextBtn.disabled = State.currentPage === pages.length;
+
+        document.querySelectorAll('.pagination-btn').forEach((btn, i) => {
+          btn.classList.toggle('active', i + 1 === State.currentPage);
+        });
+
         filterProjects();
       });
     });
@@ -359,7 +381,7 @@
       if (!emailInput.value.trim()) return showToast('Please enter your email.', 'error'), false;
       if (!emailRegex.test(emailInput.value.trim())) return showToast('Please enter a valid email.', 'error'), false;
       if (!subjectInput.value.trim()) return showToast('Please enter a subject.', 'error'), false;
-      if (!messageInput.value.trim() || messageInput.value.trim().length < 10) 
+      if (!messageInput.value.trim() || messageInput.value.trim().length < 10)
         return showToast('Message must be at least 10 characters.', 'error'), false;
       return true;
     }
@@ -400,12 +422,21 @@
     });
   }
 
-  // ===== Enhanced Visitor Counter=====
+  // ===== Visitor Counter (Fixed - No CORS Proxies) =====
   function initVisitorCounter() {
     const countEl = document.getElementById('visitor-count');
     if (!countEl) return;
-    countEl.textContent = '...';
-    countEl.style.opacity = '0.7';
+
+    // عرض آخر قيمة محفوظة فوراً بينما نجلب القيمة الحقيقية
+    const cached = localStorage.getItem('visitorCount');
+    if (cached && parseInt(cached) > 0) {
+      countEl.textContent = cached;
+      countEl.style.opacity = '0.7';
+    } else {
+      countEl.textContent = '...';
+      countEl.style.opacity = '0.7';
+    }
+
     fetchRealCount();
   }
 
@@ -413,76 +444,84 @@
     const countEl = document.getElementById('visitor-count');
     if (!countEl) return;
 
-    const PROXY_APIS = [
-      'https://corsproxy.io/?',                  
-      'https://api.allorigins.win/raw?url=',      
-      'https://proxy.cors.sh/'                    
-    ];
-
-    const baseUrl = CONFIG.VISITOR_API;
-
-    for (let i = 0; i < PROXY_APIS.length; i++) {
-      const proxy = PROXY_APIS[i];
-      let apiUrl = proxy + encodeURIComponent(baseUrl);
-
-      try {
-        const browserId = localStorage.getItem('browserId') || generateBrowserId();
-        localStorage.setItem('browserId', browserId);
-        const timestamp = Date.now();
-
-        const url = `${apiUrl}?t=${timestamp}&b=${browserId}`;
-
-        const response = await fetchWithTimeout(url, {
+    // ── طريقة 1: counterapi.dev مباشرة بدون أي proxy ──
+    try {
+      const response = await fetchWithTimeout(
+        CONFIG.VISITOR_API,
+        {
           method: 'GET',
           headers: { 'Accept': 'application/json' }
-        }, 8000);
+        },
+        6000
+      );
 
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
+      if (response.ok) {
         const data = await response.json();
         const count = data.count !== undefined ? data.count : (data.value || 0);
-
         if (count > 0) {
           localStorage.setItem('visitorCount', count);
           localStorage.setItem('lastCountUpdate', new Date().toISOString());
           animateCounter(countEl, parseInt(count));
           countEl.style.opacity = '1';
-          console.log(`✅ Visitor count loaded: ${count} (Proxy ${i+1})`);
-          return; // نجح → نخرج
+          countEl.title = '';
+          console.log('✅ Visitor count loaded from counterapi.dev:', count);
+          return;
         }
-      } catch (err) {
-        console.warn(`Proxy ${i+1} failed:`, err.message);
       }
+    } catch (err) {
+      console.warn('counterapi.dev direct failed:', err.message);
     }
 
-    // إذا فشلت كل الـ proxies
+    // ── طريقة 2: GoatCounter (مثبّت في الصفحة بالفعل) ──
+    try {
+      const response = await fetchWithTimeout(
+        CONFIG.GOATCOUNTER_API,
+        { method: 'GET', headers: { 'Accept': 'application/json' } },
+        6000
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        // GoatCounter يرجع { count: "1,234" } أو { count_unique: "..." }
+        const raw = data.count || data.count_unique || '0';
+        const count = parseInt(String(raw).replace(/,/g, ''), 10);
+        if (count > 0) {
+          localStorage.setItem('visitorCount', count);
+          localStorage.setItem('lastCountUpdate', new Date().toISOString());
+          animateCounter(countEl, count);
+          countEl.style.opacity = '1';
+          console.log('✅ Visitor count loaded from GoatCounter:', count);
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('GoatCounter fallback failed:', err.message);
+    }
+
+    // ── طريقة 3: localStorage أو retry ──
     handleFallback(countEl, retryCount);
   }
 
   function handleFallback(countEl, retryCount) {
     const savedCount = localStorage.getItem('visitorCount');
 
-    if (savedCount) {
-      countEl.textContent = savedCount;
+    if (savedCount && parseInt(savedCount) > 0) {
+      animateCounter(countEl, parseInt(savedCount));
       countEl.style.opacity = '0.85';
+      countEl.title = 'Cached count';
+      console.log('ℹ️ Showing cached visitor count:', savedCount);
       return;
     }
 
     if (retryCount < 2) {
-      setTimeout(() => fetchRealCount(retryCount + 1), 1800);
+      console.log(`🔄 Retry ${retryCount + 1} in 3s...`);
+      setTimeout(() => fetchRealCount(retryCount + 1), 3000);
     } else {
-      countEl.textContent = '15';   // قيمة افتراضية جميلة
-      countEl.style.opacity = '0.6';
+      countEl.textContent = '—';
+      countEl.style.opacity = '0.5';
+      console.warn('⚠️ All visitor counter methods failed.');
       addRetryButton();
     }
-  }
-
-  function generateBrowserId() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      const r = Math.random() * 16 | 0;
-      const v = c === 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
   }
 
   function addRetryButton() {
@@ -492,8 +531,8 @@
     const btn = document.createElement('button');
     btn.id = 'retry-count-btn';
     btn.innerHTML = '<i class="fas fa-redo"></i>';
-    btn.style.cssText = 'background:none; border:none; color:#00eeff; cursor:pointer; margin-left:8px; font-size:1.1em;';
-    btn.title = 'Retry';
+    btn.style.cssText = 'background:none;border:none;color:#00eeff;cursor:pointer;margin-left:8px;font-size:1.1em;vertical-align:middle;';
+    btn.title = 'Retry loading visitor count';
 
     btn.addEventListener('click', () => {
       btn.remove();
@@ -501,6 +540,7 @@
       if (countEl) {
         countEl.textContent = '...';
         countEl.style.opacity = '0.7';
+        countEl.title = '';
       }
       fetchRealCount();
     });
@@ -509,14 +549,9 @@
   }
 
   function animateCounter(element, target) {
-    let start = 0;
-    const current = parseInt(element.textContent) || 0;
-    if (current > 0) start = current;
-
-    if (target <= start) {
-      element.textContent = target;
-      return;
-    }
+    let start = parseInt(element.textContent) || 0;
+    if (isNaN(start) || start <= 0) start = 0;
+    if (target <= start) { element.textContent = target; return; }
 
     const duration = Math.min(1200, (target - start) * 12);
     const increment = (target - start) / (duration / 16);
