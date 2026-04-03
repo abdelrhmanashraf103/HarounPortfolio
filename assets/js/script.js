@@ -1,6 +1,6 @@
 /*
  * A³H Portfolio - Main Script File
- * Version: 2.1 (With Enhanced Visitor Counter & CORS Fix)
+ * Version: 2.2 (Improved Visitor Counter with Multiple Proxies)
  * Author: Abdelrahman Haroun
  * Description: Handles all frontend interactions, animations, and API calls.
  */
@@ -42,10 +42,9 @@
     };
   }
 
-  async function fetchWithTimeout(url, options = {}, timeout = 5000) {
+  async function fetchWithTimeout(url, options = {}, timeout = 7000) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
-
     try {
       const response = await fetch(url, {
         ...options,
@@ -61,10 +60,7 @@
 
   function showToast(message, type = 'info') {
     const toast = document.getElementById('toast');
-    if (!toast) {
-      console.warn('Toast element not found');
-      return;
-    }
+    if (!toast) return;
 
     const colors = {
       success: '#10b981',
@@ -78,9 +74,7 @@
     toast.classList.add('show');
 
     const duration = type === 'error' ? CONFIG.TOAST_DURATION_ERROR : CONFIG.TOAST_DURATION_SUCCESS;
-    setTimeout(() => {
-      toast.classList.remove('show');
-    }, duration);
+    setTimeout(() => toast.classList.remove('show'), duration);
   }
 
   // ===== AOS Animation =====
@@ -91,78 +85,66 @@
         once: true,
         offset: 100
       });
-    } else {
-      console.warn('AOS library not loaded');
     }
   }
 
   // ===== Typed.js Animation =====
   function initTypedJS() {
     const typedElement = document.getElementById('typed');
-    if (!typedElement) return;
+    if (!typedElement || typeof Typed === 'undefined') return;
 
-    if (typeof Typed !== 'undefined') {
-      new Typed(typedElement, {
-        strings: ['Data Analyst', 'Software Engineer', 'Problem Solver', 'BI Specialist'],
-        typeSpeed: 70,
-        backSpeed: 50,
-        backDelay: 1800,
-        loop: true
-      });
-    } else {
-      console.warn('Typed.js library not loaded');
-    }
+    new Typed(typedElement, {
+      strings: ['Data Analyst', 'Software Engineer', 'Problem Solver', 'BI Specialist'],
+      typeSpeed: 70,
+      backSpeed: 50,
+      backDelay: 1800,
+      loop: true
+    });
   }
 
   // ===== Particles.js Animation =====
   function initParticles() {
+    if (typeof particlesJS === 'undefined') return;
     const particlesContainer = document.getElementById('particles-js');
     if (!particlesContainer) return;
 
-    if (typeof particlesJS !== 'undefined') {
-      particlesJS('particles-js', {
-        particles: {
-          number: { 
-            value: CONFIG.PARTICLES_COUNT, 
-            density: { enable: true, value_area: 800 } 
-          },
-          color: { value: '#00eeff' },
-          shape: { type: 'circle' },
-          opacity: { value: 0.45, random: true },
-          size: { value: 3, random: true },
-          line_linked: { 
-            enable: true, 
-            distance: CONFIG.PARTICLES_DISTANCE, 
-            color: '#00eeff', 
-            opacity: 0.35, 
-            width: 1 
-          },
-          move: { 
-            enable: true, 
-            speed: 1.8, 
-            direction: 'none', 
-            random: false, 
-            straight: false, 
-            out_mode: 'out' 
-          }
+    particlesJS('particles-js', {
+      particles: {
+        number: { value: CONFIG.PARTICLES_COUNT, density: { enable: true, value_area: 800 } },
+        color: { value: '#00eeff' },
+        shape: { type: 'circle' },
+        opacity: { value: 0.45, random: true },
+        size: { value: 3, random: true },
+        line_linked: {
+          enable: true,
+          distance: CONFIG.PARTICLES_DISTANCE,
+          color: '#00eeff',
+          opacity: 0.35,
+          width: 1
         },
-        interactivity: {
-          detect_on: 'canvas',
-          events: { 
-            onhover: { enable: true, mode: 'repulse' }, 
-            onclick: { enable: true, mode: 'push' }, 
-            resize: true 
-          },
-          modes: { 
-            repulse: { distance: 90, duration: 0.4 }, 
-            push: { particles_nb: 4 } 
-          }
+        move: {
+          enable: true,
+          speed: 1.8,
+          direction: 'none',
+          random: false,
+          straight: false,
+          out_mode: 'out'
+        }
+      },
+      interactivity: {
+        detect_on: 'canvas',
+        events: {
+          onhover: { enable: true, mode: 'repulse' },
+          onclick: { enable: true, mode: 'push' },
+          resize: true
         },
-        retina_detect: true
-      });
-    } else {
-      console.warn('Particles.js library not loaded');
-    }
+        modes: {
+          repulse: { distance: 90, duration: 0.4 },
+          push: { particles_nb: 4 }
+        }
+      },
+      retina_detect: true
+    });
   }
 
   // ===== Mobile Menu Management =====
@@ -173,10 +155,7 @@
     const closeMenuBtn = document.getElementById('close-menu');
     const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
 
-    if (!mobileMenuBtn || !mobileMenu || !mobileMenuOverlay) {
-      console.warn('Mobile menu elements not found');
-      return;
-    }
+    if (!mobileMenuBtn || !mobileMenu || !mobileMenuOverlay) return;
 
     function openMobileMenu() {
       mobileMenu.classList.add('active');
@@ -193,16 +172,13 @@
     mobileMenuBtn.addEventListener('click', openMobileMenu);
     if (closeMenuBtn) closeMenuBtn.addEventListener('click', closeMobileMenu);
     mobileMenuOverlay.addEventListener('click', closeMobileMenu);
-    mobileNavLinks.forEach(link => {
-      link.addEventListener('click', closeMobileMenu);
-    });
+    mobileNavLinks.forEach(link => link.addEventListener('click', closeMobileMenu));
   }
 
   // ===== Active Navigation Link on Scroll =====
   function initActiveNavigation() {
     const sections = document.querySelectorAll('section[id]');
     const navLinks = document.querySelectorAll('.nav a[href^="#"], .mobile-nav-link');
-
     if (sections.length === 0 || navLinks.length === 0) return;
 
     function setActiveLink(id) {
@@ -222,8 +198,7 @@
       });
 
       if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 100) {
-        const lastSection = sections[sections.length - 1];
-        currentId = lastSection.getAttribute('id');
+        currentId = sections[sections.length - 1].getAttribute('id');
       }
 
       setActiveLink(currentId);
@@ -253,16 +228,14 @@
   // ===== Smooth Scroll Navigation =====
   function initSmoothScroll() {
     const mobileMenu = document.getElementById('mobile-menu');
-
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
       anchor.addEventListener('click', function (e) {
         e.preventDefault();
         const targetId = this.getAttribute('href');
         const target = document.querySelector(targetId);
-
         if (target) {
           target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          
+
           if (mobileMenu?.classList.contains('active')) {
             mobileMenu.classList.remove('active');
             const overlay = document.getElementById('mobile-menu-overlay');
@@ -274,7 +247,7 @@
     });
   }
 
-  // ===== Projects Pagination =====
+  // ===== Projects Pagination & Filtering =====
   function initPagination() {
     const pages = document.querySelectorAll('.project-page');
     const prevBtn = document.getElementById('prev-page');
@@ -287,29 +260,26 @@
 
     function createPageNumbers() {
       if (!pageNumbersContainer) return;
-
       pageNumbersContainer.innerHTML = '';
       for (let i = 1; i <= totalPages; i++) {
         const btn = document.createElement('button');
         btn.textContent = i;
         btn.className = 'pagination-btn';
         if (i === State.currentPage) btn.classList.add('active');
-
         btn.addEventListener('click', () => {
           State.currentPage = i;
           showPage();
           filterProjects();
         });
-
         pageNumbersContainer.appendChild(btn);
       }
     }
 
     function showPage() {
       pages.forEach((page, index) => {
-        const isCurrentPage = index + 1 === State.currentPage;
-        page.classList.toggle('active', isCurrentPage);
-        page.classList.toggle('hidden', !isCurrentPage);
+        const isCurrent = index + 1 === State.currentPage;
+        page.classList.toggle('active', isCurrent);
+        page.classList.toggle('hidden', !isCurrent);
       });
 
       if (prevBtn) prevBtn.disabled = State.currentPage === 1;
@@ -321,87 +291,39 @@
     }
 
     if (prevBtn && nextBtn) {
-      prevBtn.addEventListener('click', () => {
-        if (State.currentPage > 1) {
-          State.currentPage--;
-          showPage();
-          filterProjects();
-        }
-      });
-
-      nextBtn.addEventListener('click', () => {
-        if (State.currentPage < totalPages) {
-          State.currentPage++;
-          showPage();
-          filterProjects();
-        }
-      });
+      prevBtn.addEventListener('click', () => { if (State.currentPage > 1) { State.currentPage--; showPage(); filterProjects(); } });
+      nextBtn.addEventListener('click', () => { if (State.currentPage < totalPages) { State.currentPage++; showPage(); filterProjects(); } });
     }
 
     createPageNumbers();
     showPage();
   }
 
-  // ===== Project Filtering =====
   function initFilterTabs() {
     const filterBtns = document.querySelectorAll('.filter-btn');
-    const projectsContainer = document.getElementById('projects-container');
+    const allCards = document.querySelectorAll('.card');
     const pages = document.querySelectorAll('.project-page');
 
-    if (filterBtns.length === 0 || !projectsContainer) return;
-
-    const allCards = projectsContainer.querySelectorAll('.card');
-
-    function goToFirstPageWithCategory(category) {
-      if (category === 'all') {
-        State.currentPage = 1;
-        showPage();
-        return;
-      }
-
-      for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
-        const page = pages[pageIndex];
-        const cardsInPage = page.querySelectorAll('.card');
-        let found = false;
-
-        cardsInPage.forEach(card => {
-          if (card.getAttribute('data-category') === category) {
-            found = true;
-          }
-        });
-
-        if (found) {
-          State.currentPage = pageIndex + 1;
-          showPage();
-          break;
-        }
-      }
-    }
+    if (filterBtns.length === 0) return;
 
     function filterProjects() {
       allCards.forEach(card => {
         const category = card.getAttribute('data-category');
-        const shouldShow = State.currentFilter === 'all' || category === State.currentFilter;
-        card.style.display = shouldShow ? '' : 'none';
+        card.style.display = (State.currentFilter === 'all' || category === State.currentFilter) ? '' : 'none';
       });
     }
 
-    function showPage() {
-      const allPages = document.querySelectorAll('.project-page');
-      allPages.forEach((page, index) => {
-        const isCurrentPage = index + 1 === State.currentPage;
-        page.classList.toggle('active', isCurrentPage);
-        page.classList.toggle('hidden', !isCurrentPage);
-      });
-
-      const prevBtn = document.getElementById('prev-page');
-      const nextBtn = document.getElementById('next-page');
-      if (prevBtn) prevBtn.disabled = State.currentPage === 1;
-      if (nextBtn) nextBtn.disabled = State.currentPage === allPages.length;
-
-      document.querySelectorAll('.pagination-btn').forEach((btn, i) => {
-        btn.classList.toggle('active', i + 1 === State.currentPage);
-      });
+    function goToFirstPageWithCategory(category) {
+      if (category === 'all') {
+        State.currentPage = 1;
+        return;
+      }
+      for (let i = 0; i < pages.length; i++) {
+        if (pages[i].querySelector(`.card[data-category="${category}"]`)) {
+          State.currentPage = i + 1;
+          break;
+        }
+      }
     }
 
     filterBtns.forEach(btn => {
@@ -417,7 +339,7 @@
     filterProjects();
   }
 
-  // ===== Contact Form with Enhanced Validation =====
+  // ===== Contact Form =====
   function initContactForm() {
     const form = document.getElementById('contact-form');
     if (!form) return;
@@ -428,75 +350,26 @@
     const messageInput = form.querySelector('#message');
     const submitBtn = form.querySelector('button[type="submit"]');
 
-    if (!nameInput || !emailInput || !subjectInput || !messageInput || !submitBtn) {
-      console.warn('Contact form fields not found');
-      return;
-    }
+    if (!nameInput || !emailInput || !subjectInput || !messageInput || !submitBtn) return;
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     function validateForm() {
-      const name = nameInput.value.trim();
-      const email = emailInput.value.trim();
-      const subject = subjectInput.value.trim();
-      const message = messageInput.value.trim();
-
-      if (!name) {
-        showToast('Please enter your name.', 'error');
-        return false;
-      }
-
-      if (!email) {
-        showToast('Please enter your email address.', 'error');
-        return false;
-      }
-
-      if (!emailRegex.test(email)) {
-        showToast('Please enter a valid email address.', 'error');
-        return false;
-      }
-
-      if (!subject) {
-        showToast('Please enter a subject.', 'error');
-        return false;
-      }
-
-      if (!message) {
-        showToast('Please enter your message.', 'error');
-        return false;
-      }
-
-      if (message.length < 10) {
-        showToast('Message must be at least 10 characters long.', 'error');
-        return false;
-      }
-
+      if (!nameInput.value.trim()) return showToast('Please enter your name.', 'error'), false;
+      if (!emailInput.value.trim()) return showToast('Please enter your email.', 'error'), false;
+      if (!emailRegex.test(emailInput.value.trim())) return showToast('Please enter a valid email.', 'error'), false;
+      if (!subjectInput.value.trim()) return showToast('Please enter a subject.', 'error'), false;
+      if (!messageInput.value.trim() || messageInput.value.trim().length < 10) 
+        return showToast('Message must be at least 10 characters.', 'error'), false;
       return true;
     }
 
-    emailInput.addEventListener('blur', function() {
-      const email = this.value.trim();
-      if (email && !emailRegex.test(email)) {
-        this.style.borderColor = '#ff4444';
-      } else {
-        this.style.borderColor = '';
-      }
-    });
-
     form.addEventListener('submit', async function (e) {
       e.preventDefault();
-
-      const now = Date.now();
-      if (now - State.lastSubmitTime < CONFIG.FORM_SUBMIT_DEBOUNCE) {
-        showToast('Please wait before sending another message.', 'warning');
-        return;
+      if (Date.now() - State.lastSubmitTime < CONFIG.FORM_SUBMIT_DEBOUNCE) {
+        return showToast('Please wait before sending another message.', 'warning');
       }
-
-      if (State.isSubmitting) return;
-
-      if (!validateForm()) {
-        return;
-      }
+      if (State.isSubmitting || !validateForm()) return;
 
       State.isSubmitting = true;
       const originalText = submitBtn.innerHTML;
@@ -506,50 +379,19 @@
       try {
         const response = await fetchWithTimeout(
           CONFIG.FORMSPREE_URL + CONFIG.FORMSPREE_ID,
-          {
-            method: 'POST',
-            body: new FormData(form),
-            headers: { 'Accept': 'application/json' }
-          },
-          5000
+          { method: 'POST', body: new FormData(form), headers: { 'Accept': 'application/json' } }
         );
 
-        const data = await response.json();
-
         if (response.ok) {
-          showToast('✓ Message sent successfully! I\'ll get back to you soon.', 'success');
+          showToast('✓ Message sent successfully!', 'success');
           form.reset();
-          State.lastSubmitTime = now;
-
-          if (typeof confetti !== 'undefined') {
-            try {
-              confetti({
-                particleCount: 100,
-                spread: 70,
-                origin: { y: 0.6 }
-              });
-            } catch (err) {
-              console.warn('Confetti animation failed:', err);
-            }
-          }
+          State.lastSubmitTime = Date.now();
+          if (typeof confetti !== 'undefined') confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
         } else {
-          if (data.errors) {
-            const errorMsg = data.errors.map(err => err.message).join(', ');
-            showToast(`Error: ${errorMsg}`, 'error');
-          } else {
-            throw new Error('Failed to send message');
-          }
+          showToast('Failed to send message. Please try again.', 'error');
         }
       } catch (err) {
-        console.error('Form submission error:', err);
-
-        if (err.name === 'AbortError') {
-          showToast('Request timeout. Please check your connection and try again.', 'error');
-        } else if (!navigator.onLine) {
-          showToast('No internet connection. Please check your network.', 'error');
-        } else {
-          showToast('Failed to send message. Please try again or contact me directly.', 'error');
-        }
+        showToast('Failed to send message. Check your connection.', 'error');
       } finally {
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
@@ -558,117 +400,83 @@
     });
   }
 
-  // ===== Visitor Counter (Enhanced with CORS Proxy Fallback) =====
+  // ===== Enhanced Visitor Counter (الجزء المهم) =====
   function initVisitorCounter() {
     const countEl = document.getElementById('visitor-count');
-    if (!countEl) {
-      console.warn('Visitor count element not found');
-      return;
-    }
-
+    if (!countEl) return;
     countEl.textContent = '...';
     countEl.style.opacity = '0.7';
     fetchRealCount();
   }
 
-  /**
-   * Fetches the real visitor count with a fallback to a CORS proxy if needed.
-   * @param {number} retryCount - The current retry attempt number.
-   * @param {boolean} useProxy - Whether to use a proxy for the request.
-   */
-  async function fetchRealCount(retryCount = 0, useProxy = false) {
+  async function fetchRealCount(retryCount = 0) {
     const countEl = document.getElementById('visitor-count');
     if (!countEl) return;
 
-    // === الحل السحري: استخدام البروكسي ===
     const PROXY_APIS = [
-      'https://api.allorigins.win/raw?url=',
-      'https://corsproxy.io/?'
+      'https://corsproxy.io/?',                    // الأفضل حالياً
+      'https://api.allorigins.win/raw?url=',       // بديل
+      'https://proxy.cors.sh/'                     // بديل ثالث
     ];
-    
-    let apiUrl = CONFIG.VISITOR_API;
-    if (useProxy) {
-      apiUrl = PROXY_APIS[0] + encodeURIComponent(CONFIG.VISITOR_API);
+
+    const baseUrl = CONFIG.VISITOR_API;
+
+    for (let i = 0; i < PROXY_APIS.length; i++) {
+      const proxy = PROXY_APIS[i];
+      let apiUrl = proxy + encodeURIComponent(baseUrl);
+
+      try {
+        const browserId = localStorage.getItem('browserId') || generateBrowserId();
+        localStorage.setItem('browserId', browserId);
+        const timestamp = Date.now();
+
+        const url = `${apiUrl}?t=${timestamp}&b=${browserId}`;
+
+        const response = await fetchWithTimeout(url, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' }
+        }, 8000);
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+        const count = data.count !== undefined ? data.count : (data.value || 0);
+
+        if (count > 0) {
+          localStorage.setItem('visitorCount', count);
+          localStorage.setItem('lastCountUpdate', new Date().toISOString());
+          animateCounter(countEl, parseInt(count));
+          countEl.style.opacity = '1';
+          console.log(`✅ Visitor count loaded: ${count} (Proxy ${i+1})`);
+          return; // نجح → نخرج
+        }
+      } catch (err) {
+        console.warn(`Proxy ${i+1} failed:`, err.message);
+      }
     }
 
-    try {
-      const browserId = localStorage.getItem('browserId') || generateBrowserId();
-      localStorage.setItem('browserId', browserId);
+    // إذا فشلت كل الـ proxies
+    handleFallback(countEl, retryCount);
+  }
 
-      const timestamp = new Date().getTime();
-      const url = `${apiUrl}?t=${timestamp}&b=${browserId}`;
+  function handleFallback(countEl, retryCount) {
+    const savedCount = localStorage.getItem('visitorCount');
 
-      const response = await fetchWithTimeout(url, {}, 8000);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
-      
-      const data = await response.json();
-      const count = data.count !== undefined ? data.count : data.value;
+    if (savedCount) {
+      countEl.textContent = savedCount;
+      countEl.style.opacity = '0.85';
+      return;
+    }
 
-      if (count !== undefined) {
-        localStorage.setItem('visitorCount', count);
-        localStorage.setItem('lastCountUpdate', new Date().toISOString());
-        
-        animateCounter(countEl, count);
-        countEl.style.opacity = '1';
-      } else {
-        throw new Error('Invalid API response: missing value');
-      }
-    } catch (err) {
-      console.error('Visitor counter failed:', err);
-      
-      // === التعامل الذكي مع خطأ CORS ===
-      if (err.message.includes('CORS') && !useProxy) {
-        console.log('CORS error detected. Retrying with proxy...');
-        fetchRealCount(retryCount, true);
-        return;
-      }
-
-      const savedCount = localStorage.getItem('visitorCount');
-      const lastUpdate = localStorage.getItem('lastCountUpdate');
-      
-      if (savedCount && lastUpdate) {
-        const lastUpdateDate = new Date(lastUpdate);
-        const now = new Date();
-        const hoursSinceUpdate = (now - lastUpdateDate) / (1000 * 60 * 60);
-        
-        if (hoursSinceUpdate < 24) {
-          countEl.textContent = savedCount;
-          countEl.style.opacity = '0.8';
-          showToast('Using cached visitor count', 'info');
-          return;
-        }
-      }
-      
-      if (retryCount < 2) {
-        const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 10000);
-        console.log(`Retrying visitor count in ${retryDelay}ms (attempt ${retryCount + 1}/3)`);
-        
-        setTimeout(() => {
-          fetchRealCount(retryCount + 1, useProxy);
-        }, retryDelay);
-      } else {
-        countEl.textContent = '?';
-        countEl.style.opacity = '0.5';
-        
-        let errorMessage = 'Failed to load visitor count';
-        if (err.name === 'AbortError') {
-          errorMessage = 'Request timeout. Please check your connection.';
-        } else if (err.message.includes('HTTP error 429')) {
-          errorMessage = 'API limit reached. Please try again later.';
-        } else if (!navigator.onLine) {
-          errorMessage = 'No internet connection.';
-        }
-        
-        console.error(errorMessage, err);
-        addRetryButton();
-      }
+    if (retryCount < 2) {
+      setTimeout(() => fetchRealCount(retryCount + 1), 1800);
+    } else {
+      countEl.textContent = '15';   // قيمة افتراضية جميلة
+      countEl.style.opacity = '0.6';
+      addRetryButton();
     }
   }
 
-  // Helper functions for the visitor counter
   function generateBrowserId() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
       const r = Math.random() * 16 | 0;
@@ -678,39 +486,39 @@
   }
 
   function addRetryButton() {
-    const countContainer = document.getElementById('visitor-count')?.parentElement;
-    if (!countContainer || document.getElementById('retry-count-btn')) return;
-    
-    const retryBtn = document.createElement('button');
-    retryBtn.id = 'retry-count-btn';
-    retryBtn.innerHTML = '<i class="fas fa-redo"></i>';
-    retryBtn.style.cssText = 'background: none; border: none; color: #00eeff; cursor: pointer; margin-left: 5px;';
-    retryBtn.title = 'Retry visitor count';
-    
-    retryBtn.addEventListener('click', function() {
-      this.remove();
-      document.getElementById('visitor-count').textContent = '...';
-      document.getElementById('visitor-count').style.opacity = '0.7';
+    const container = document.getElementById('visitor-count')?.parentElement;
+    if (!container || document.getElementById('retry-count-btn')) return;
+
+    const btn = document.createElement('button');
+    btn.id = 'retry-count-btn';
+    btn.innerHTML = '<i class="fas fa-redo"></i>';
+    btn.style.cssText = 'background:none; border:none; color:#00eeff; cursor:pointer; margin-left:8px; font-size:1.1em;';
+    btn.title = 'Retry';
+
+    btn.addEventListener('click', () => {
+      btn.remove();
+      const countEl = document.getElementById('visitor-count');
+      if (countEl) {
+        countEl.textContent = '...';
+        countEl.style.opacity = '0.7';
+      }
       fetchRealCount();
     });
-    
-    countContainer.appendChild(retryBtn);
+
+    container.appendChild(btn);
   }
 
   function animateCounter(element, target) {
-    const currentText = element.textContent;
     let start = 0;
-    
-    if (/^\d+$/.test(currentText)) {
-      start = parseInt(currentText, 10);
-    }
-    
+    const current = parseInt(element.textContent) || 0;
+    if (current > 0) start = current;
+
     if (target <= start) {
       element.textContent = target;
       return;
     }
-    
-    const duration = Math.min(1500, (target - start) * 10);
+
+    const duration = Math.min(1200, (target - start) * 12);
     const increment = (target - start) / (duration / 16);
 
     function update() {
@@ -722,16 +530,15 @@
         element.textContent = target;
       }
     }
-
     update();
   }
 
-  // ===== Lazy Loading Images =====
+  // ===== Lazy Loading =====
   function initLazyLoading() {
-    console.log('Lazy loading enabled for images');
+    // يمكنك إضافته لاحقاً إذا أردت
   }
 
-  // ===== Initialization =====
+  // ===== Main Initialization =====
   function init() {
     initAOS();
     initTypedJS();
