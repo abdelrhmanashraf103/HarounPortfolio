@@ -158,9 +158,8 @@
     }
   }
 
-  // ===== Mobile Menu Management=====
+  // ===== Mobile Menu Management =====
   function initMobileMenu() {
-    console.log('🔧 initMobileMenu called');
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
     const mobileMenu = document.getElementById('mobile-menu');
     const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
@@ -168,20 +167,17 @@
     const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
 
     if (!mobileMenuBtn || !mobileMenu || !mobileMenuOverlay) {
-      console.warn('❌ Mobile menu elements not found');
+      console.warn('Mobile menu elements not found');
       return;
     }
-    console.log('✅ Mobile menu elements found');
 
     function openMobileMenu() {
-      console.log('🍔 openMobileMenu triggered');
       mobileMenu.classList.add('active');
       mobileMenuOverlay.classList.add('active');
       document.body.style.overflow = 'hidden';
     }
 
     function closeMobileMenu() {
-      console.log('❌ closeMobileMenu triggered');
       mobileMenu.classList.remove('active');
       mobileMenuOverlay.classList.remove('active');
       document.body.style.overflow = 'auto';
@@ -555,7 +551,9 @@
     });
   }
 
-  // ===== Visitor Counter - Modified to work immediately on page load =====
+  // ===== Visitor Counter =====
+  // ✅ FIX: يتم استدعاء الـ API مرة واحدة فقط عند تحميل الصفحة
+  // ❌ تمت إزالة IntersectionObserver الذي كان يسبب double counting
   function initVisitorCounter() {
     const countEl = document.getElementById('visitor-count');
     if (!countEl) {
@@ -563,42 +561,18 @@
       return;
     }
 
-    // Immediately fetch and increment the counter when page loads
     fetchRealCount();
-
-    // Optional: Also set up an observer to refresh when the stats section becomes visible (for updates)
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          // Refresh count in case it changed while user was on page (optional)
-          fetchRealCount(false); // false = do not increment again, just fetch
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.1 });
-
-    observer.observe(countEl);
   }
 
-  async function fetchRealCount(increment = true) {
+  async function fetchRealCount() {
     const countEl = document.getElementById('visitor-count');
     if (!countEl) return;
 
-    // Use the API endpoint that increments count (default behavior)
-    // If increment is false, we could fetch without incrementing, but the API doesn't support that easily.
-    // So we'll always use the /up endpoint to ensure each page view is counted once.
-    // To avoid double counting on the same page load, we rely on the fact that this function is called only once per load (from init).
-    // The observer call uses increment=false but we'll just fetch the current count from a different endpoint? 
-    // Since counterapi.dev doesn't have a read-only endpoint easily, we'll skip second fetch.
-    // Simpler: only call on page load and ignore observer refresh.
-    // Modify: remove the observer call's fetch, just keep the initial one.
-    // Let's restructure: only call once on init.
     try {
       const response = await fetchWithTimeout(CONFIG.VISITOR_API, {}, 5000);
       if (!response.ok) throw new Error(`HTTP error ${response.status}`);
       
       const data = await response.json();
-      // counterapi.dev returns { count: number }
       const count = data.count !== undefined ? data.count : data.value;
 
       if (count !== undefined) {
@@ -644,7 +618,6 @@
 
   // ===== Initialization =====
   function init() {
-    console.log('🚀 Initializing portfolio...');
     initAOS();
     initTypedJS();
     initParticles();
@@ -655,10 +628,8 @@
     initPagination();
     initFilterTabs();
     initContactForm();
-    initVisitorCounter(); // Now calls counter immediately
+    initVisitorCounter();
     initLazyLoading();
-
-    console.log('✅ Portfolio initialized successfully');
   }
 
   if (document.readyState === 'loading') {
