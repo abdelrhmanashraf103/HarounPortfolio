@@ -5,7 +5,7 @@
   const CONFIG = {
     FORMSPREE_ID: 'f/xjkeqpek',
     FORMSPREE_URL: 'https://formspree.io/',
-    VISITOR_API: 'https://api.countapi.xyz/hit/abdelrahman-haroun-portfolio/visitors',
+    VISITOR_API: 'https://api.counterapi.dev/v1/abdelrahman-haroun-portfolio/visitors/up',
     FORM_SUBMIT_DEBOUNCE: 10000,
     SCROLL_DEBOUNCE: 150,
     TOAST_DURATION_SUCCESS: 4000,
@@ -582,7 +582,8 @@
       if (!response.ok) throw new Error(`HTTP error ${response.status}`);
       
       const data = await response.json();
-      const count = data.value; // CountAPI
+      // counterapi.dev returns { count: number }
+      const count = data.count !== undefined ? data.count : data.value;
 
       if (count !== undefined) {
         animateCounter(countEl, count);
