@@ -1,8 +1,8 @@
 /*
  * A³H Portfolio - Main Script File
- * Version: 2.3 (Visitor Counter via GoatCounter)
+ * Version: 2.2 (Improved Visitor Counter with Multiple Proxies)
  * Author: Abdelrahman Haroun
- * Description: Handles all frontend interactions, animations, API calls, and visitor count via GoatCounter.
+ * Description: Handles all frontend interactions, animations, and API calls.
  */
 
 (function () {
@@ -12,6 +12,7 @@
   const CONFIG = {
     FORMSPREE_ID: 'f/xjkeqpek',
     FORMSPREE_URL: 'https://formspree.io/',
+    VISITOR_API: 'https://api.counterapi.dev/v1/abdelrahman-haroun-portfolio/visitors/up',
     FORM_SUBMIT_DEBOUNCE: 10000,
     SCROLL_DEBOUNCE: 150,
     TOAST_DURATION_SUCCESS: 4000,
@@ -399,45 +400,142 @@
     });
   }
 
-  // ===== Visitor Counter via GoatCounter (replaces old counter logic) =====
+  // ===== Enhanced Visitor Counter=====
   function initVisitorCounter() {
     const countEl = document.getElementById('visitor-count');
     if (!countEl) return;
-
-    // تعيين حالة تحميل
     countEl.textContent = '...';
     countEl.style.opacity = '0.7';
+    fetchRealCount();
+  }
 
-    // نستخدم setTimeout للتأكد من تحميل GoatCounter بالكامل
-    setTimeout(() => {
-      fetch('https://abdelrahmanharoun.goatcounter.com/counter/.json')
-        .then(response => {
-          if (!response.ok) throw new Error('HTTP error ' + response.status);
-          return response.json();
-        })
-        .then(data => {
-          let count = data && data.count ? data.count : (data && data.value ? data.value : null);
-          if (count !== null && !isNaN(parseInt(count))) {
-            countEl.textContent = count;
-            countEl.style.opacity = '1';
-          } else {
-            // في حالة عدم وجود العدد نعرض قيمة افتراضية
-            countEl.textContent = '15+';
-            countEl.style.opacity = '0.85';
-          }
-        })
-        .catch(err => {
-          console.warn('GoatCounter fetch failed:', err);
-          // عرض قيمة افتراضية عند فشل الجلب
-          countEl.textContent = '15+';
-          countEl.style.opacity = '0.85';
-        });
-    }, 1200); // تأخير 1.2 ثانية لضمان استقرار الصفحة
+  async function fetchRealCount(retryCount = 0) {
+    const countEl = document.getElementById('visitor-count');
+    if (!countEl) return;
+
+    const PROXY_APIS = [
+      'https://corsproxy.io/?',                  
+      'https://api.allorigins.win/raw?url=',      
+      'https://proxy.cors.sh/'                    
+    ];
+
+    const baseUrl = CONFIG.VISITOR_API;
+
+    for (let i = 0; i < PROXY_APIS.length; i++) {
+      const proxy = PROXY_APIS[i];
+      let apiUrl = proxy + encodeURIComponent(baseUrl);
+
+      try {
+        const browserId = localStorage.getItem('browserId') || generateBrowserId();
+        localStorage.setItem('browserId', browserId);
+        const timestamp = Date.now();
+
+        const url = `${apiUrl}?t=${timestamp}&b=${browserId}`;
+
+        const response = await fetchWithTimeout(url, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' }
+        }, 8000);
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+        const count = data.count !== undefined ? data.count : (data.value || 0);
+
+        if (count > 0) {
+          localStorage.setItem('visitorCount', count);
+          localStorage.setItem('lastCountUpdate', new Date().toISOString());
+          animateCounter(countEl, parseInt(count));
+          countEl.style.opacity = '1';
+          console.log(`✅ Visitor count loaded: ${count} (Proxy ${i+1})`);
+          return; // نجح → نخرج
+        }
+      } catch (err) {
+        console.warn(`Proxy ${i+1} failed:`, err.message);
+      }
+    }
+
+    // إذا فشلت كل الـ proxies
+    handleFallback(countEl, retryCount);
+  }
+
+  function handleFallback(countEl, retryCount) {
+    const savedCount = localStorage.getItem('visitorCount');
+
+    if (savedCount) {
+      countEl.textContent = savedCount;
+      countEl.style.opacity = '0.85';
+      return;
+    }
+
+    if (retryCount < 2) {
+      setTimeout(() => fetchRealCount(retryCount + 1), 1800);
+    } else {
+      countEl.textContent = '15';   // قيمة افتراضية جميلة
+      countEl.style.opacity = '0.6';
+      addRetryButton();
+    }
+  }
+
+  function generateBrowserId() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+
+  function addRetryButton() {
+    const container = document.getElementById('visitor-count')?.parentElement;
+    if (!container || document.getElementById('retry-count-btn')) return;
+
+    const btn = document.createElement('button');
+    btn.id = 'retry-count-btn';
+    btn.innerHTML = '<i class="fas fa-redo"></i>';
+    btn.style.cssText = 'background:none; border:none; color:#00eeff; cursor:pointer; margin-left:8px; font-size:1.1em;';
+    btn.title = 'Retry';
+
+    btn.addEventListener('click', () => {
+      btn.remove();
+      const countEl = document.getElementById('visitor-count');
+      if (countEl) {
+        countEl.textContent = '...';
+        countEl.style.opacity = '0.7';
+      }
+      fetchRealCount();
+    });
+
+    container.appendChild(btn);
+  }
+
+  function animateCounter(element, target) {
+    let start = 0;
+    const current = parseInt(element.textContent) || 0;
+    if (current > 0) start = current;
+
+    if (target <= start) {
+      element.textContent = target;
+      return;
+    }
+
+    const duration = Math.min(1200, (target - start) * 12);
+    const increment = (target - start) / (duration / 16);
+
+    function update() {
+      start += increment;
+      if (start < target) {
+        element.textContent = Math.floor(start);
+        requestAnimationFrame(update);
+      } else {
+        element.textContent = target;
+      }
+    }
+    update();
   }
 
   // ===== Lazy Loading =====
   function initLazyLoading() {
-    // يمكن إضافة تحسينات لاحقاً
+    // يمكنك إضافته لاحقاً إذا أردت
   }
 
   // ===== Main Initialization =====
@@ -452,7 +550,7 @@
     initPagination();
     initFilterTabs();
     initContactForm();
-    initVisitorCounter();   // الآن تستخدم GoatCounter بدلاً من الـ API القديم
+    initVisitorCounter();
     initLazyLoading();
   }
 
