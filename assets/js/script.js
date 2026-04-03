@@ -1,3 +1,10 @@
+/*
+ * A³H Portfolio - Main Script File
+ * Version: 2.1 (With Enhanced Visitor Counter & CORS Fix)
+ * Author: Abdelrahman Haroun
+ * Description: Handles all frontend interactions, animations, and API calls.
+ */
+
 (function () {
   'use strict';
 
@@ -551,9 +558,7 @@
     });
   }
 
-  // ===== Visitor Counter (Improved Version) =====
-  // ✅ تم تحسين معالجة الأخطاء وإضافة آلية بديلة
-  // ✅ إضافة التخزين المحلي كحل بديل عند فشل الـ API
+  // ===== Visitor Counter (Enhanced with CORS Proxy Fallback) =====
   function initVisitorCounter() {
     const countEl = document.getElementById('visitor-count');
     if (!countEl) {
@@ -561,25 +566,37 @@
       return;
     }
 
-    // إضافة مؤشر تحميل
     countEl.textContent = '...';
     countEl.style.opacity = '0.7';
-
     fetchRealCount();
   }
 
-  async function fetchRealCount(retryCount = 0) {
+  /**
+   * Fetches the real visitor count with a fallback to a CORS proxy if needed.
+   * @param {number} retryCount - The current retry attempt number.
+   * @param {boolean} useProxy - Whether to use a proxy for the request.
+   */
+  async function fetchRealCount(retryCount = 0, useProxy = false) {
     const countEl = document.getElementById('visitor-count');
     if (!countEl) return;
 
+    // === الحل السحري: استخدام البروكسي ===
+    const PROXY_APIS = [
+      'https://api.allorigins.win/raw?url=',
+      'https://corsproxy.io/?'
+    ];
+    
+    let apiUrl = CONFIG.VISITOR_API;
+    if (useProxy) {
+      apiUrl = PROXY_APIS[0] + encodeURIComponent(CONFIG.VISITOR_API);
+    }
+
     try {
-      // إضافة معرف فريد للمتصفح لتجنب العد المزدوج
       const browserId = localStorage.getItem('browserId') || generateBrowserId();
       localStorage.setItem('browserId', browserId);
 
-      // إضافة timestamp للطلب لتجنب التخزين المؤقت
       const timestamp = new Date().getTime();
-      const url = `${CONFIG.VISITOR_API}?t=${timestamp}&b=${browserId}`;
+      const url = `${apiUrl}?t=${timestamp}&b=${browserId}`;
 
       const response = await fetchWithTimeout(url, {}, 8000);
       
@@ -591,7 +608,6 @@
       const count = data.count !== undefined ? data.count : data.value;
 
       if (count !== undefined) {
-        // حفظ العد في التخزين المحلي كنسخة احتياطية
         localStorage.setItem('visitorCount', count);
         localStorage.setItem('lastCountUpdate', new Date().toISOString());
         
@@ -603,7 +619,13 @@
     } catch (err) {
       console.error('Visitor counter failed:', err);
       
-      // محاولة استخدام القيمة المحفوظة محلياً
+      // === التعامل الذكي مع خطأ CORS ===
+      if (err.message.includes('CORS') && !useProxy) {
+        console.log('CORS error detected. Retrying with proxy...');
+        fetchRealCount(retryCount, true);
+        return;
+      }
+
       const savedCount = localStorage.getItem('visitorCount');
       const lastUpdate = localStorage.getItem('lastCountUpdate');
       
@@ -612,7 +634,6 @@
         const now = new Date();
         const hoursSinceUpdate = (now - lastUpdateDate) / (1000 * 60 * 60);
         
-        // استخدام القيمة المحفوظة إذا كانت محدثة خلال 24 ساعة
         if (hoursSinceUpdate < 24) {
           countEl.textContent = savedCount;
           countEl.style.opacity = '0.8';
@@ -621,41 +642,33 @@
         }
       }
       
-      // إعادة المحاولة مع تراجع أسي
-      if (retryCount < 3) {
+      if (retryCount < 2) {
         const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 10000);
         console.log(`Retrying visitor count in ${retryDelay}ms (attempt ${retryCount + 1}/3)`);
         
         setTimeout(() => {
-          fetchRealCount(retryCount + 1);
+          fetchRealCount(retryCount + 1, useProxy);
         }, retryDelay);
       } else {
-        // عرض رسالة خطأ واضحة
         countEl.textContent = '?';
         countEl.style.opacity = '0.5';
         
-        // تحديد نوع الخطأ بناءً على الرسالة
         let errorMessage = 'Failed to load visitor count';
-        
         if (err.name === 'AbortError') {
           errorMessage = 'Request timeout. Please check your connection.';
         } else if (err.message.includes('HTTP error 429')) {
           errorMessage = 'API limit reached. Please try again later.';
         } else if (!navigator.onLine) {
           errorMessage = 'No internet connection.';
-        } else if (err.message.includes('CORS')) {
-          errorMessage = 'CORS error. Try using a different browser.';
         }
         
         console.error(errorMessage, err);
-        
-        // إضافة زر إعادة المحاولة
         addRetryButton();
       }
     }
   }
 
-  // إنشاء معرف فريد للمتصفح
+  // Helper functions for the visitor counter
   function generateBrowserId() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
       const r = Math.random() * 16 | 0;
@@ -664,7 +677,6 @@
     });
   }
 
-  // إضافة زر إعادة المحاولة
   function addRetryButton() {
     const countContainer = document.getElementById('visitor-count')?.parentElement;
     if (!countContainer || document.getElementById('retry-count-btn')) return;
@@ -685,18 +697,14 @@
     countContainer.appendChild(retryBtn);
   }
 
-  // تحسين دالة animateCounter
   function animateCounter(element, target) {
-    // حفظ القيمة الحالية إذا كانت موجودة
     const currentText = element.textContent;
     let start = 0;
     
-    // إذا كانت القيمة الحالية رقم، ابدأ منها
     if (/^\d+$/.test(currentText)) {
       start = parseInt(currentText, 10);
     }
     
-    // إذا كانت القيمة المستهدفة أقل من القيمة الحالية، لا تقم بالتحريك
     if (target <= start) {
       element.textContent = target;
       return;
