@@ -404,11 +404,11 @@
     const countEl = document.getElementById('visitor-count');
     if (!countEl) return;
 
-    // Set loading state
+    // تعيين حالة تحميل
     countEl.textContent = '...';
     countEl.style.opacity = '0.7';
 
-    // We use setTimeout to ensure GoatCounter is fully loaded
+    // نستخدم setTimeout للتأكد من تحميل GoatCounter بالكامل
     setTimeout(() => {
       fetch('https://abdelrahmanharoun.goatcounter.com/counter/.json')
         .then(response => {
@@ -421,23 +421,23 @@
             countEl.textContent = count;
             countEl.style.opacity = '1';
           } else {
-            // If count doesn't exist, we display a default value
+            // في حالة عدم وجود العدد نعرض قيمة افتراضية
             countEl.textContent = '15+';
             countEl.style.opacity = '0.85';
           }
         })
         .catch(err => {
           console.warn('GoatCounter fetch failed:', err);
-          // Display default value when fetch fails
+          // عرض قيمة افتراضية عند فشل الجلب
           countEl.textContent = '15+';
           countEl.style.opacity = '0.85';
         });
-    }, 1200); // 1.2 second delay to ensure page stability
+    }, 1200); // تأخير 1.2 ثانية لضمان استقرار الصفحة
   }
 
   // ===== Lazy Loading =====
   function initLazyLoading() {
-    // Can add improvements later
+    // يمكن إضافة تحسينات لاحقاً
   }
 
   // ===== Main Initialization =====
@@ -452,7 +452,7 @@
     initPagination();
     initFilterTabs();
     initContactForm();
-    initVisitorCounter();   // Now uses GoatCounter instead of the old API
+    initVisitorCounter();   // الآن تستخدم GoatCounter بدلاً من الـ API القديم
     initLazyLoading();
   }
 
