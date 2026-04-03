@@ -400,7 +400,7 @@
     });
   }
 
-  // ===== Enhanced Visitor Counter (الجزء المهم) =====
+  // ===== Enhanced Visitor Counter=====
   function initVisitorCounter() {
     const countEl = document.getElementById('visitor-count');
     if (!countEl) return;
@@ -414,9 +414,9 @@
     if (!countEl) return;
 
     const PROXY_APIS = [
-      'https://corsproxy.io/?',                    // الأفضل حالياً
-      'https://api.allorigins.win/raw?url=',       // بديل
-      'https://proxy.cors.sh/'                     // بديل ثالث
+      'https://corsproxy.io/?',                  
+      'https://api.allorigins.win/raw?url=',      
+      'https://proxy.cors.sh/'                    
     ];
 
     const baseUrl = CONFIG.VISITOR_API;
