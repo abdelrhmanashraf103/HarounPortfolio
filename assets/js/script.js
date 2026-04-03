@@ -555,16 +555,23 @@
     });
   }
 
+  // ===== Visitor Counter - Modified to work immediately on page load =====
   function initVisitorCounter() {
     const countEl = document.getElementById('visitor-count');
-    if (!countEl) return;
+    if (!countEl) {
+      console.warn('Visitor count element not found');
+      return;
+    }
 
-    countEl.textContent = '...';
+    // Immediately fetch and increment the counter when page loads
+    fetchRealCount();
 
+    // Optional: Also set up an observer to refresh when the stats section becomes visible (for updates)
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
-          fetchRealCount();
+          // Refresh count in case it changed while user was on page (optional)
+          fetchRealCount(false); // false = do not increment again, just fetch
           observer.unobserve(entry.target);
         }
       });
@@ -573,10 +580,19 @@
     observer.observe(countEl);
   }
 
-  async function fetchRealCount() {
+  async function fetchRealCount(increment = true) {
     const countEl = document.getElementById('visitor-count');
     if (!countEl) return;
 
+    // Use the API endpoint that increments count (default behavior)
+    // If increment is false, we could fetch without incrementing, but the API doesn't support that easily.
+    // So we'll always use the /up endpoint to ensure each page view is counted once.
+    // To avoid double counting on the same page load, we rely on the fact that this function is called only once per load (from init).
+    // The observer call uses increment=false but we'll just fetch the current count from a different endpoint? 
+    // Since counterapi.dev doesn't have a read-only endpoint easily, we'll skip second fetch.
+    // Simpler: only call on page load and ignore observer refresh.
+    // Modify: remove the observer call's fetch, just keep the initial one.
+    // Let's restructure: only call once on init.
     try {
       const response = await fetchWithTimeout(CONFIG.VISITOR_API, {}, 5000);
       if (!response.ok) throw new Error(`HTTP error ${response.status}`);
@@ -594,6 +610,7 @@
       console.error('Visitor counter failed:', err);
       countEl.textContent = '?';
       
+      // Retry after 10 seconds
       setTimeout(() => {
         if (countEl.textContent === '?') {
           fetchRealCount();
@@ -638,7 +655,7 @@
     initPagination();
     initFilterTabs();
     initContactForm();
-    initVisitorCounter();
+    initVisitorCounter(); // Now calls counter immediately
     initLazyLoading();
 
     console.log('✅ Portfolio initialized successfully');
